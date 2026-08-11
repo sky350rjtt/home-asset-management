@@ -55,7 +55,7 @@ const AssetMasterDAO = (() => {
   return {
     /**
      * 台帳の全行を読み、物理列を「意味のある名前」に変換した配列で返す。
-     * ★台帳の列配置(COL/DOC_COL)を知ってよいのは、この DAO だけ。
+     * 台帳の列配置(COL/DOC_COL)を知ってよいのは、この DAO だけ。
      *   呼び出し側(Entry等)は row[13] のような生インデックスを一切触らない。
      * @param {boolean} includeEmbedding trueならT列（巨大ベクトル）も同梱。省略時は付けない。
      */
@@ -124,7 +124,7 @@ const AssetMasterDAO = (() => {
       // N列（廃棄日）は空欄のまま＝稼働中。書類IDは後段のappendFileId()が入れるため、ここでは触らない。
       row[COL.REMARKS - 1]        = data.remarks        || '';
       
-      // ★DAOは思考停止で、渡された embedding の数値をそのままT列に突っ込むだけ
+      // embeddingは業務ロジック層で生成済みの値をそのまま受け取り、加工せずT列に書き込む
       row[COL.EMBEDDING - 1]      = data.embedding      || '';
  
       sheet.appendRow(row);
@@ -187,7 +187,7 @@ const AssetMasterDAO = (() => {
 
     /**
      * S列（remarks）とT列（embedding）を1回のAPI呼び出しでまとめて書き込む。
-     * ★S/T列は物理的に隣接(19,20)しているため、getRange(row,19,1,2)で一括更新できる。
+     * S/T列は物理的に隣接(19,20)しているため、getRange(row,19,1,2)で一括更新できる。
      *   remarksとembeddingは常にセットで更新される情報なので、書き込みも1回にまとめる
      *   （ネットワーク往復を減らし、片方だけ書けて片方が失敗する中途半端な状態も避ける）。
      * @param {string} remarks         S列に書くあいまい検索ワード
@@ -201,18 +201,28 @@ const AssetMasterDAO = (() => {
     assignId(assetMasterId, locationCode, categoryCode) {
       const sheet   = _getSheet(assetMasterId);
       const lastRow = sheet.getLastRow();
-      
-      const currentYearStr = String(new Date().getFullYear()).slice(-2); 
+
+      if (!locationCode || !categoryCode) {
+        throw new Error(`assignId: 拠点コードまたはカテゴリコードが空です（locationCode="${locationCode}", categoryCode="${categoryCode}"）。`);
+      }
+
+      const currentYearStr = String(new Date().getFullYear()).slice(-2);
       const prefix = `${locationCode}${categoryCode}${currentYearStr}`;
-      let maxSeq = 0; 
-      
+
+      // 【前提の動的算出】拠点コード＋カテゴリコードの合計文字数を固定長で決め打ちせず、
+      //   実際に組み立てたprefixの長さから毎回算出する。将来コード体系が変わってprefix長が
+      //   変化しても、このロジックはハードコードされた桁数に縛られず追従できる。
+      const SEQ_DIGITS = 3;
+      const idLength = prefix.length + SEQ_DIGITS;
+      let maxSeq = 0;
+
       if (lastRow > 1) {
         const idValues = sheet.getRange(2, COL.ASSET_ID, lastRow - 1, 1).getValues();
-        
+
         idValues.forEach(row => {
           const id = String(row[0]);
-          if (id.length === 11 && id.startsWith(prefix)) {
-            const idSeq = id.substring(8, 11); 
+          if (id.length === idLength && id.startsWith(prefix)) {
+            const idSeq = id.substring(prefix.length, idLength);
             const seqNum = parseInt(idSeq, 10);
             if (!isNaN(seqNum) && seqNum > maxSeq) {
               maxSeq = seqNum;
@@ -220,10 +230,18 @@ const AssetMasterDAO = (() => {
           }
         });
       }
-      
+
       const nextSeq = maxSeq + 1;
-      const paddedSeq = String(nextSeq).padStart(3, '0'); 
-      
+      const paddedSeq = String(nextSeq).padStart(SEQ_DIGITS, '0');
+
+      // 【前提崩壊の検知】連番がSEQ_DIGITS桁に収まらなくなった場合、桁あふれしたIDを
+      //   黙って発行すると、以後 id.length === idLength の判定に一致しなくなり、
+      //   このprefixの最大値を正しく検出できずに連番が1から再スタートしてIDが衝突する。
+      //   静かに壊すのではなく、ここでエラーとして検知して処理を止める。
+      if (paddedSeq.length !== SEQ_DIGITS) {
+        throw new Error(`assignId: 連番が${SEQ_DIGITS}桁の上限（${'9'.repeat(SEQ_DIGITS)}）を超えました（prefix="${prefix}", 次の連番=${nextSeq}）。採番ロジックの前提を見直してください。`);
+      }
+
       return `${prefix}${paddedSeq}`;
     },
   };

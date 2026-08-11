@@ -10,7 +10,7 @@
 //   3. Gemini に完成済みプロンプトを渡して書類種別を判定させる
 //   4. AssetMasterDAO で書類列に FileID を追記する
 //   5. FileUtils でファイルを移動する
-//   6. 取説(MNL)が追加された場合のみ、remarks/検索ベクトルを再生成する ★V20で追加
+//   6. 取説(MNL)が追加された場合のみ、remarks/検索ベクトルを再生成する
 //      （登録時に取説がまだ無かった資産は、ここでベクトルが初めて埋まる）
 //
 // 【ファイル名の規則】
@@ -95,8 +95,8 @@ const AddFolder = {
           // 台帳側から現在の最新の連番（空き番号）を取得
           const seq = AssetMasterDAO.getNextSeq(config.ASSET_MASTER_ID, assetRow, dt);
  
-          // ★【大変更】assetId自体にカテゴリ(REF等)が含まれるため、配列からcategoryを完全に排除！
-          // これにより、H01REF26001_Toshiba_... という無駄のない美しいファイル名になります。
+          // assetId自体にカテゴリコード(REF等)が含まれているため、ファイル名の構成パーツに
+          // categoryは含めない（例: H01REF26001_Toshiba_...）。
           file.setName(FileUtils.buildFileName(
             [assetId, dt, assetInfo.maker || info.maker, assetInfo.modelNumber || info.modelNumber, seq],
             ext
@@ -108,7 +108,6 @@ const AddFolder = {
           }
  
           FileUtils.move(file, folder, docsFolder);
-          // 【バグ修正】変数名を正しいもの（seq, mergedCount）に修正
           SheetUtils.log(logSheet, [fname, assetId, 'MERGED', `${dt}_${seq}`]);
           mergedCount++;
         });
@@ -116,9 +115,9 @@ const AddFolder = {
         // 最後に、領収書などから得られた購入情報を台帳へ上書きアップデート
         AssetMasterDAO.updatePurchaseInfo(config.ASSET_MASTER_ID, assetRow, info);
 
-        // 【穴の解消】取説(MNL)がこの回に含まれていた場合のみ、remarks/ベクトルを再生成する。
-        //   ★追加のGemini呼び出しは不要：info.remarks/info.summaryは冒頭のanalyze()で
-        //     この取説を含めて解析済みのため、ここでは組み立て・埋め込みのみ行う。
+        // 取説(MNL)がこの回に含まれていた場合のみ、remarks/ベクトルを再生成する。
+        //   追加のGemini呼び出しは不要：info.remarks/info.summaryは冒頭のanalyze()で
+        //   この取説を含めて解析済みのため、ここでは組み立て・埋め込みのみ行う。
         //   受領書だけの追加ではremarks/summaryはnull想定のため、既存のS列/T列を上書きしない。
         if (hasManual && (info.remarks || info.summary)) {
           // 【上書き前の監査ログ】S列は「人間＆AI共用」の欄のため、人間が書いた既存メモを
@@ -157,37 +156,12 @@ const AddFolder = {
     return { mergedCount, errorCount, heicCount };
   },
  
-  // ★【大変更】プロンプトを「マルチファイル・ファイル名マッピング仕様」へ完全同期！
-  // これにより、複数ファイルを同時に投げた際、どのファイルがMNLで、どれがRCPかをAIが正しく識別します。
+  // プロンプト本文の組み立ては PromptBuilder.gs に委譲する（Location.gsと共用）。
+  // ここで渡すのは「対象が既存資産である」という、この処理フロー固有の文脈情報のみ。
   _buildPrompt(catText) {
-    return `
-You will receive multiple files (e.g., Manual, Warranty, Receipt) for a SINGLE existing asset product.
-Analyze all provided files together, merge the information, and return a SINGLE JSON object ONLY. No preamble, explanation, or markdown fences.
- 
-{
-  "docType": "${Constants.buildDocTypePromptText()}",
-  "maker": "一般的な企業名にしてください、英語の場合は大文字小文字は企業ロゴに従う形で 例: パナソニック→Panasonic, シャープ→SHARP, 東芝→TOSHIBA, ソニー→SONY, 日立→HITACHI, 三菱→Mitsubishi, 富士通→Fujitsu, Unknown/OEM→OTH.",
-  "productName": "Name in concise Japanese. 一般名称、Normalize: 冷蔵庫、テレビ、マッサージガン、エアコン、掃除機 etc...",
-  "modelNumber": "型番/形名/品番/MODEL exactly as printed. Search ALL pages: 表紙・仕様ページ・最終ページ. Labels: 型番、型　番、形名、形　名、品番、MODEL NO、型式. First model number if multiple.",
-  "category": "Best matching code from the category list below.",
-  "purchaseDate": "YYYY/MM/DD from receipt, else null",
-  "purchasePrice": "Price as number without currency from receipt, else null",
-  "purchaseStore": "Store chain name only (ビックカメラ池袋店→ビックカメラ). Null if not receipt.",
-  "warrantyExpiry": "YYYY/MM/DD from warranty doc, else null",
-  "remarks": "A robust search index for query expansion and fluctuation handling. Generate a comma-separated list of 5-8 predictive search keywords in concise Japanese that a user or family member might input. YOU MUST INCLUDE ALL OF THE FOLLOWING: 1) Complete maker name variations (if the maker is in English, always provide its Katakana and Hiragana variations, e.g., SONY -> ソニー, そにー; TOSHIBA -> 東芝, とうしば; SHARP -> シャープ, しゃーぷ), 2) Product name variations and synonyms (e.g., 電子レンジ -> レンジ, オーブン), 3) Common colloquial terms or primary action words (e.g., チンするやつ, 温め, 冷やす, 洗濯), 4) Character type variations (Kanji/Katakana/Hiragana mixing). CRITICAL CRITERIA: Absolutely focus ONLY on the positive primary purpose and identity of the product. NEVER include peripheral noise from safety warnings or troubleshooting sections. No explanation, output only comma-separated words.",
-  "summary": "If a Manual (MNL) is among the provided files, a concise 2-3 sentence Japanese summary of the product's core functions and distinguishing features from the manual content. Do NOT include safety warnings or troubleshooting content. Under 200 characters. If no Manual is present, return null.",
-  "files": [
-    {
-      "filename": "Exact original filename provided in the input",
-      "docType": "Classify this specific file: ${Constants.buildDocTypeShortPromptText()}"
-    }
-  ]
-}
- 
-Category list:
-${catText}
- 
-CRITICAL: modelNumber is the primary identifier. Read all pages carefully. Return null for unreadable fields.
-`;
+    return PromptBuilder.buildAssetAnalysisPrompt(
+      'You will receive multiple files (e.g., Manual, Warranty, Receipt) for a SINGLE existing asset product.',
+      catText
+    );
   },
 };

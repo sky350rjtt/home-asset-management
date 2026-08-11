@@ -19,8 +19,8 @@
 const VectorMaintenance = {
   /**
    * ベクトル化する生テキストを組み立てる。
-   * ★将来の引っ越し・資産移動に対応するため、拠点(B,C列)やシステム用カテゴリコード(D列)は
-   *   絶対に含めない。
+   * 資産が拠点間で移動しても検索の意味が変わらないよう、拠点(B,C列)やシステム用カテゴリコード(D列)は
+   *   含めない。
    * @param {string} productName
    * @param {string} maker
    * @param {string} modelNumber

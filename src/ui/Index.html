@@ -20,7 +20,6 @@
       </div>
       
       <h1 class="text-base md:text-lg font-semibold text-slate-900 dark:text-slate-100 tracking-tight mb-1 transition-colors">Asset AI Scanner</h1>
-      <!-- ★ text-[11px] ➔ text-xs に底上げ -->
       <p class="text-xs text-slate-500 dark:text-slate-400 mb-8 font-medium">INBOX一括自動解析・台帳登録</p>
  
       <div class="mb-8">
@@ -32,25 +31,21 @@
       </div>
 
       <div class="mb-4 text-left px-1">
-        <!-- ★ text-[10px] ➔ text-xs に底上げ -->
         <label for="model-select" class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 ml-0.5">🤖 設定: 使用AIモデル</label>
         <div class="relative">
           <select id="model-select" disabled
             class="w-full p-3.5 bg-[#f0f4f9] dark:bg-[#0f0f10] border border-transparent rounded-2xl text-sm text-slate-400 dark:text-slate-500 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all duration-200 cursor-pointer appearance-none">
             <option>Loading Master...</option>
           </select>
-          <!-- ★ text-[10px] ➔ text-xs に底上げ -->
           <div class="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-400 dark:text-slate-500 text-xs">▼</div>
         </div>
       </div>
  
       <div id="result-box" class="mt-6 text-left border border-slate-200/70 dark:border-slate-800/60 bg-[#f8f9fa] dark:bg-[#0f0f10]/40 rounded-2xl p-4 hidden transition-all duration-300">
-        <!-- ★ text-[10px] ➔ text-xs に底上げ -->
         <div class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-3 border-b border-slate-200/60 dark:border-slate-800/60 pb-2 flex items-center gap-1.5 tracking-wider uppercase">
           📊 <span>実行レポート</span>
         </div>
         <div id="result-content" class="text-sm text-slate-700 dark:text-slate-300 space-y-2.5 font-medium"></div>
-        <!-- ★ text-[11px] ➔ text-xs に底上げ -->
         <div id="heic-warning" class="mt-4 p-3.5 bg-amber-50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/30 rounded-xl text-xs text-amber-800 dark:text-amber-400 leading-relaxed hidden"></div>
       </div>
     </div>

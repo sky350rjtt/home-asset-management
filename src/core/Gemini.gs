@@ -44,7 +44,7 @@ const Gemini = {
 
     try {
       // -------------------------------------------------------------------------
-      // STEP 1-1 & 1-2: 全ファイルの並列アップロード（メモリ最適化ストリーム仕様を完全維持）
+      // STEP 1-1 & 1-2: 全ファイルを順にアップロード（resumable uploadでストリーム送信し、メモリ消費を抑える）
       // -------------------------------------------------------------------------
       for (let i = 0; i < blobs.length; i++) {
         const blob = blobs[i];
@@ -96,7 +96,7 @@ const Gemini = {
             'X-Goog-Upload-Command': 'upload, finalize'
           },
           contentType: mimeType,
-          payload: blob, // ★ 24MBのパンクを防ぐ、あなたオリジナルのストリーム仕様を完全死守！
+          payload: blob, // Blobをストリームで送ることで、大容量ファイルでもリクエストサイズ上限に達しない
           muteHttpExceptions: true
         });
 
@@ -118,7 +118,7 @@ const Gemini = {
       }
 
       // -------------------------------------------------------------------------
-      // STEP 1-3: 全ファイルが「ACTIVE」になるまで粘り強く監視（36回×5秒＝3分を完全維持）
+      // STEP 1-3: 全ファイルが「ACTIVE」になるまでポーリングして待つ（最大36回×5秒＝3分）
       // -------------------------------------------------------------------------
       let isAllReady = true;
 
@@ -166,7 +166,7 @@ const Gemini = {
       console.log(`[Gemini Debug] 2. AIマルチコンテンツ一括解析フェーズを開始します...`);
       const generateUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
-      // ★ 修正版：ダブルクォーテーションの競合を解消
+      // 各ファイルの一時URIと元ファイル名の対応表を、プロンプト本文の先頭に付加する
       let fileContext = "You are provided with the following files for a single product asset:\n";
       fileDataList.forEach((fd, idx) => {
         fileContext += `- File [${idx + 1}]: Temporary URI is "${fd.uri}", Original Filename is "${fd.filename}"\n`;
@@ -202,7 +202,7 @@ const Gemini = {
             const text = JSON.parse(body).candidates?.[0]?.content?.parts?.[0]?.text || '';
             console.log(`[Gemini OK] 全書類の統合 ➔ 解析成功（応答文字数: ${text.length}）`);
 
-            // ★ マークダウンの ```json を確実に弾く、あなたオリジナルの安全パースを完全死守！
+            // 応答本文にマークダウンのコードフェンス等が付いていても、JSON構造の部分だけを抽出する
             const match = text.match(/\{[\s\S]*\}/);
             if (match) { 
               resultJson = JSON.parse(match[0]); 
@@ -240,7 +240,7 @@ const Gemini = {
       return null;
     } finally {
       // -------------------------------------------------------------------------
-      // STEP 3: 【マナー】Googleサーバー上の一時ファイルをすべて安全に一括削除
+      // STEP 3: 後始末としてGoogleサーバー上の一時ファイルを削除する
       // -------------------------------------------------------------------------
       fileDataList.forEach(fd => {
         try {
@@ -256,28 +256,23 @@ const Gemini = {
         }
       });
     }
-  }, // 🚨 ここにカンマを打って、既存の analyze と新規の embed を美しく並列化！
+  },
 
   // =======================================================================
-  // ★ ここから embed メソッド（テキストの超高速ベクトル変換用）
+  // embed: テキストをベクトル化する（Embedding生成）
   // =======================================================================
   /**
-   * 🧠 テキストをベクトル化する（Embedding生成）
-   * @param {string} apiKey     - Gemini API キー
-   * @param {string} embedModel - ベクトル化用モデル名（Configから調達）
-   * @param {string} text       - ベクトル化したいクリーンな文章
-   * @returns {number[]|null}  1024次元のベクトル配列 or 失敗時null
-   */
-  /**
-   * @param {string} apiKey
-   * @param {string} embedModel
-   * @param {string} text
+   * テキストをベクトル化する（Embedding生成）。
+   * @param {string} apiKey      - Gemini API キー
+   * @param {string} embedModel  - ベクトル化用モデル名（Configから調達）
+   * @param {string} text        - ベクトル化したいクリーンな文章
    * @param {number} [dimension] - 出力次元数を明示固定する（省略時はモデルの既定次元）
+   * @returns {number[]|null}    - ベクトル配列、または失敗時null
    */
   embed(apiKey, embedModel, text, dimension) {
     if (!text) return null;
-    
-    // 💡 テキストデータなのでファイルのアップロードは不要。直接エンドポイントへPOSTするだけ
+
+    // テキストのみのリクエストのため、analyze()のようなファイルアップロード手順は不要
     const url = "https://generativelanguage.googleapis.com/v1beta/models/" + embedModel + ":embedContent?key=" + apiKey;
     const payload = {
       model: `models/${embedModel}`,

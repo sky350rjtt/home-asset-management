@@ -7,7 +7,7 @@
 // =============================================================================
 
 /**
- * 🚀 フロントエンド（Web UI）から直接呼び出される、完全隔離型AI検索エンジンの入場口
+ * フロントエンド（Web UI）から google.script.run 経由で呼び出される、AIベクトル検索のエントリポイント。
  * @param {string} query - ユーザーが検索窓に入力した文字列
  * @returns {Object[]}   - AIおすすめ順に並び替えられた資産データの配列
  */
@@ -15,13 +15,15 @@ function EXCLUSIVE_AI_VECTOR_SEARCH_ENTRANCE(query) {
   return AiSearchNamespace.execute(query);
 }
 
-// 🔐 外部からの干渉を100%遮断する検索ロジックの名前空間
+// 検索ロジックをまとめた名前空間。フロントエンドに公開するのは
+// EXCLUSIVE_AI_VECTOR_SEARCH_ENTRANCE のみで、内部実装は直接呼び出させない。
 var AiSearchNamespace = {
   execute: function(query) {
-    // 1. サーバー内部で全データをロード（★ここでベクトル(T列)も一緒に取得＝台帳を読むのは1回だけ）
+    // 1. サーバー内部で全データをロード（ここでベクトル(T列)も一緒に取得＝台帳を読むのは1回だけ）
+    //    読み込み・見せ方への整形は shared/AssetPresenter.gs（Entry.gsと共用）に委譲する。
     var allData = [];
     try {
-      allData = _loadAssetsFromLedger(true);
+      allData = AssetPresenter.loadFromLedger(true);
     } catch(e) {
       throw new Error("【データロード失敗】台帳の読み込みでエラー: " + e.toString());
     }
@@ -68,8 +70,8 @@ var AiSearchNamespace = {
     scored.sort(function(a, b) { return b.score - a.score; });
 
     // 4.5【足切り】類似度が低すぎる（＝意味的に無関係な）結果まで一覧に混ぜない。
-    //     ★「適切な閾値」はコードが決め打ちすべきものではないため、Configシートの
-    //       GEMINI_SEARCH_MIN_SCORE から取得する（未設定なら0＝足切りしない）。
+    //     閾値はコードにハードコードせず、Configシートの GEMINI_SEARCH_MIN_SCORE から取得する
+    //     （未設定なら0＝足切りしない）。
     scored = scored.filter(function(item) { return item.score >= config.SEARCH_MIN_SCORE; });
 
     // 5. 通信を軽くするため、重いベクトルを外してフロントへ返却
@@ -81,7 +83,7 @@ var AiSearchNamespace = {
   },
 
   /**
-   * 📐 2つのベクトルのコサイン類似度を計算する数学関数
+   * 2つのベクトルのコサイン類似度を計算する。
    */
   cosineSimilarity: function(vecA, vecB) {
     var dotProduct = 0.0;

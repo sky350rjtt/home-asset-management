@@ -6,25 +6,24 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     
-    <!-- 🌐 フロント側は標準のビューポートのみ。余計なtheme-colorハックは全廃 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <!-- 🌐 ロゴ専用：Noto Sans JP -->
+
+    <!-- ロゴ見出し（Foundタイトル）にのみ使うWebフォント -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght=900&display=swap" rel="stylesheet">
 
     <style>
-      /* 🌟 ネイティブ最優先：引っ張りバウンスによる白帯リークを物理的に完全遮断 */
+      /* 引っ張りバウンス時に背景色の外側（白帯）が見えるのを防ぐ */
       html {
         overscroll-behavior-y: none !important;
-        /* 🚀 GASの検閲をすり抜け、OSに直接「ライト/ダーク両対応」を伝達 */
+        /* GASが配信するHTMLはheadの一部が制御されるため、CSS側でOSにライト/ダーク両対応を伝える */
         color-scheme: light dark !important;
-        /* 🚀 親ページ（Googleコンテナ）に打ち勝つための背景色最速固定 */
+        /* GASの親コンテナの背景色より先に確定させる */
         background-color: #f0f4f9 !important;
       }
-      
-      /* 🚀 ダークモード時の背景色も確実におさえる */
+
+      /* ダークモード時の背景色も同様に固定する */
       @media (prefers-color-scheme: dark) {
         html {
           background-color: #131314 !important;
@@ -36,7 +35,7 @@
         padding: 1rem;
       }
 
-      /* 🎨 確定デザイントークン層（表示の完全分離・ライト/ダーク100%自動追従） */
+      /* テキストカラーのデザイントークン。ライト/ダークで自動的に切り替わる */
       .token-text-primary { color: #020617 !important; }
       .token-text-secondary { color: #1e293b !important; }
       .token-text-tertiary { color: #334155 !important; }
@@ -60,7 +59,7 @@
       }
       .noto-title { font-family: 'Noto Sans JP', sans-serif !important; }
 
-      /* 🚀 PWA対応：ホーム画面からスタンドアロン起動された時だけ、自動でノッチの安全余白を確保 */
+      /* ホーム画面から起動した場合（PWAのstandaloneモード）のみ、ノッチ部分の安全余白を確保する */
       @media (display-mode: standalone) {
         body {
           padding-top: calc(1rem + env(safe-area-inset-top)) !important;
@@ -68,7 +67,7 @@
       }
     </style>
   </head>
-  <!-- 🎨 背景色はTailwindの標準ダークモードクラスで、OSのモードに素直に追従させる -->
+  <!-- body の背景色はTailwindの標準的なdark:クラスでOS設定に追従させる -->
   <body class="bg-[#f0f4f9] dark:bg-[#131314] font-sans antialiased min-h-screen flex flex-col p-4 md:p-8 select-none transition-colors duration-300">
 
     <div class="w-full max-w-none mx-auto flex flex-col gap-5 relative z-10 px-2 md:px-6">
@@ -88,7 +87,7 @@
       <div class="bg-white dark:bg-[#1e1f20] p-4 md:p-5 rounded-[24px] flex flex-col gap-3 transition-all duration-300 sticky top-2 md:top-4 z-30 shadow-md border border-slate-200/20 dark:border-white/5">
 
         <div class="flex flex-col md:flex-row gap-3 h-auto md:h-12">
-          <!-- 🚀 検索バー -->
+          <!-- 検索バー -->
           <div class="relative flex items-center flex-1 h-12">
             <input type="text" id="search-input" oninput="toggleClearButton()" onkeydown="if(event.key === 'Enter') executeSearch()" placeholder="資産名、型番、用途で検索... ( / キーでフォーカス )"
               class="w-full h-full pl-12 pr-12 bg-[#f8f9fa] dark:bg-[#282a2c] border-none rounded-full text-sm text-slate-800 dark:text-slate-200 font-semibold placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus-visible:ring-2 focus-visible:ring-blue-500/40 transition-all duration-200">
@@ -209,7 +208,8 @@
           return 'bg-white dark:bg-[#1e1f20]'; 
         },
         
-        // 🚀 【新規追加】最強の検索正規化（前処理クレンジング）エンジン
+        // 検索語と台帳データの双方に適用する正規化処理。表記ゆれ（全角/半角・ひらがな/カタカナ・
+        // 大文字小文字・法人格表記の有無等）を吸収し、部分一致の精度を上げる。
         normalizeText(rawStr) {
           if (!rawStr) return '';
           let str = String(rawStr);
@@ -411,7 +411,8 @@
         document.getElementById('search-input').disabled = isSearching;
       }
 
-      // 🚀 【進化】クエリ正規化エンジンを組み込んだ超強固な検索処理
+      // 検索実行：クエリを正規化した上でローカル台帳を検索し、ヒットが無ければ
+      // サーバー側のAIベクトル検索にフォールバックする。
       window.executeSearch = function() {
         const rawQuery = document.getElementById('search-input').value.trim();
         if (!rawQuery) {
@@ -419,7 +420,7 @@
           return;
         }
 
-        // 入力文字を「半角小文字・カタカナ・ノイズなし」に超圧縮
+        // 入力文字を正規化する（半角・カタカナ統一、ノイズ除去）
         const normalizedQuery = utils.normalizeText(rawQuery);
 
         const searchKeys = ['name', 'maker', 'model', 'cat', 'catName', 'remarks'];
@@ -626,18 +627,18 @@
         return `
           <div class="flex flex-col flex-1 min-w-0 h-full justify-between">
             
-            <!-- 📌 1. 上段：タグエリア（左上完全固定） -->
+            <!-- 上段：タグエリア -->
             <div class="flex items-center gap-2 flex-wrap shrink-0">
               <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-black/5 dark:bg-white/10 text-slate-800 dark:text-slate-200 tracking-wider">${a.catName || a.cat || '未分類'}</span>
               <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-black/5 dark:bg-white/10 text-slate-800 dark:text-slate-200 tracking-wider">${a.locName || a.loc || '未定'}</span>
             </div>
-            
-            <!-- 🚀 2. 中段：製品名（完全可変縦中央浮遊） -->
+
+            <!-- 中段：製品名 -->
             <div class="flex-1 flex items-center min-w-0 py-2">
               <h2 class="text-base md:text-lg font-black ${titleTextClass} truncate pr-2 tracking-tight token-mb-loose">${a.name || '名称未設定'}</h2>
             </div>
-            
-            <!-- 📌 3. 下段：詳細情報群（左下完全固定） -->
+
+            <!-- 下段：詳細情報 -->
             <div class="flex flex-col token-gap-tight shrink-0 token-text-secondary">
               <!-- メーカー・型番 -->
               <div class="flex items-center min-w-0 text-sm font-bold">
@@ -703,7 +704,7 @@
       }
 
       // ==========================================
-      // 🚀 6. 操作のUD：爆速キーボード完結システム
+      // 6. キーボード操作（「/」で検索欄にフォーカス、Escapeでクリア）
       // ==========================================
       window.addEventListener('keydown', (e) => {
         const isTyping = e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT';
