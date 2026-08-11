@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <!-- 🌐 フロント側は標準のビューポートのみ。余計なtheme-colorハックは全廃 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- 🌐 ロゴ専用：Noto Sans JP -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght=900&display=swap" rel="stylesheet">
+
+    <style>
+      /* 🌟 ネイティブ最優先：引っ張りバウンスによる白帯リークを物理的に完全遮断 */
+      html {
+        overscroll-behavior-y: none !important;
+        /* 🚀 GASの検閲をすり抜け、OSに直接「ライト/ダーク両対応」を伝達 */
+        color-scheme: light dark !important;
+        /* 🚀 親ページ（Googleコンテナ）に打ち勝つための背景色最速固定 */
+        background-color: #f0f4f9 !important;
+      }
+      
+      /* 🚀 ダークモード時の背景色も確実におさえる */
+      @media (prefers-color-scheme: dark) {
+        html {
+          background-color: #131314 !important;
+        }
+      }
+
+      body {
+        margin: 0;
+        padding: 1rem;
+      }
+
+      /* 🎨 確定デザイントークン層（表示の完全分離・ライト/ダーク100%自動追従） */
+      .token-text-primary { color: #020617 !important; }
+      .token-text-secondary { color: #1e293b !important; }
+      .token-text-tertiary { color: #334155 !important; }
+
+      @media (prefers-color-scheme: dark) {
+        .token-text-primary { color: #f1f5f9 !important; }
+        .token-text-secondary { color: #e2e8f0 !important; }
+        .token-text-tertiary { color: #cbd5e1 !important; }
+      }
+      
+      /* 垂直リズム：疎密の余白定義 */
+      .token-mb-loose { margin-bottom: 0.375rem !important; }
+      .token-gap-tight { gap: 0.125rem !important; }
+
+      * { -webkit-tap-highlight-color: transparent; }
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      
+      body { 
+        font-family: "BIZ UDPGothic", "Hiragino Kaku Gothic ProN", "Meiryo UI", sans-serif !important; 
+      }
+      .noto-title { font-family: 'Noto Sans JP', sans-serif !important; }
+
+      /* 🚀 PWA対応：ホーム画面からスタンドアロン起動された時だけ、自動でノッチの安全余白を確保 */
+      @media (display-mode: standalone) {
+        body {
+          padding-top: calc(1rem + env(safe-area-inset-top)) !important;
+        }
+      }
+    </style>
+  </head>
+  <!-- 🎨 背景色はTailwindの標準ダークモードクラスで、OSのモードに素直に追従させる -->
+  <body class="bg-[#f0f4f9] dark:bg-[#131314] font-sans antialiased min-h-screen flex flex-col p-4 md:p-8 select-none transition-colors duration-300">
+
+    <div class="w-full max-w-none mx-auto flex flex-col gap-5 relative z-10 px-2 md:px-6">
+
+      <!-- ヘッダーエリア -->
+      <div class="flex items-end justify-between px-1">
+        <div>
+          <h1 onclick="backToTop()" class="noto-title text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight cursor-pointer hover:opacity-80 active:scale-98 transition-all">Found</h1>
+          <p class="text-[10px] text-slate-400 dark:text-slate-500 font-bold mt-0.5 tracking-wider uppercase">Asset Master</p>
+        </div>
+        <div class="bg-white dark:bg-[#1e1f20] text-xs font-bold px-4 py-2 rounded-full text-slate-700 dark:text-slate-300 transition-colors whitespace-nowrap shadow-xs">
+          <span id="shown-count" class="text-slate-900 dark:text-white">0</span><span id="total-suffix" class="text-slate-500"> / 0件</span>
+        </div>
+      </div>
+
+      <!-- コントロールパネル -->
+      <div class="bg-white dark:bg-[#1e1f20] p-4 md:p-5 rounded-[24px] flex flex-col gap-3 transition-all duration-300 sticky top-2 md:top-4 z-30 shadow-md border border-slate-200/20 dark:border-white/5">
+
+        <div class="flex flex-col md:flex-row gap-3 h-auto md:h-12">
+          <!-- 🚀 検索バー -->
+          <div class="relative flex items-center flex-1 h-12">
+            <input type="text" id="search-input" oninput="toggleClearButton()" onkeydown="if(event.key === 'Enter') executeSearch()" placeholder="資産名、型番、用途で検索... ( / キーでフォーカス )"
+              class="w-full h-full pl-12 pr-12 bg-[#f8f9fa] dark:bg-[#282a2c] border-none rounded-full text-sm text-slate-800 dark:text-slate-200 font-semibold placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus-visible:ring-2 focus-visible:ring-blue-500/40 transition-all duration-200">
+            <div class="absolute inset-y-0 left-5 flex items-center pointer-events-none text-slate-400 dark:text-slate-500 text-sm">🔍</div>
+            <button id="clear-btn" onclick="clearSearch()" class="hidden absolute right-1.5 w-9 h-9 items-center justify-center text-slate-400 dark:text-slate-400 text-lg font-medium hover:text-slate-600 dark:hover:text-slate-200 transition-all cursor-pointer">
+              ×
+            </button>
+          </div>
+
+          <div class="grid grid-cols-2 md:flex gap-3 h-12 shrink-0 w-full md:w-auto">
+            <select id="sort-select" onchange="executeSort()" title="並び替え" class="col-span-1 px-5 bg-[#f8f9fa] dark:bg-[#282a2c] border-none rounded-full text-xs font-bold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus-visible:ring-2 focus-visible:ring-blue-500/40 cursor-pointer h-full w-full md:w-48">
+              <option value="name_asc" selected>名前順 (あ-ん)</option>
+              <option value="maker_asc">メーカー順</option>
+              <option value="date_desc">購入日が新しい順</option>
+              <option value="date_asc">購入日が古い順</option>
+              <option value="default">システム登録順</option>
+            </select>
+
+            <button onclick="toggleFilters()" id="filter-btn" class="col-span-1 px-5 bg-[#f8f9fa] dark:bg-[#282a2c] text-slate-700 dark:text-slate-200 rounded-full text-xs font-bold hover:brightness-95 dark:hover:brightness-110 transition-all border-none h-full flex items-center justify-center gap-2 w-full md:w-40 cursor-pointer">
+              <span class="hidden md:inline">詳細フィルター</span>
+              <span class="inline md:hidden">フィルター</span>
+              <span id="filter-badge" class="hidden bg-blue-500 text-white text-[10px] font-bold w-4 h-4 items-center justify-center rounded-full">0</span>
+              <span id="filter-icon" class="text-[10px]">▼</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="active-filter-tags" class="hidden flex-wrap gap-1.5 items-center"></div>
+
+        <div id="filter-container" class="hidden flex-col gap-4 pt-4 mt-2 border-t border-slate-200/50 dark:border-white/5">
+          <div class="flex flex-col gap-2">
+            <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider ml-1">🏠 ロケーション</span>
+            <div id="location-chips" class="flex flex-nowrap md:flex-wrap gap-1.5 overflow-x-auto md:overflow-visible no-scrollbar py-0.5"></div>
+          </div>
+          <div class="flex flex-col gap-2">
+            <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider ml-1">🏷️ カテゴリ</span>
+            <div id="category-chips" class="flex flex-nowrap md:flex-wrap gap-1.5 overflow-x-auto md:overflow-visible no-scrollbar py-0.5"></div>
+          </div>
+          
+          <div class="flex items-center gap-2 pt-2 border-t border-slate-200/50 dark:border-white/5">
+            <label class="inline-flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700 dark:text-slate-300 select-none py-2 px-1">
+              <input type="checkbox" id="show-disposed-check" onchange="toggleDisposed()" class="w-4 h-4 rounded-sm border-slate-300 dark:border-slate-600 text-blue-500 focus:ring-blue-500/40">
+              <span>♻️ 廃棄・処分済みの資産も含めて表示する</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI検索結果バナー -->
+      <div id="ai-result-banner" class="hidden items-center justify-between gap-3 bg-blue-50/80 dark:bg-blue-900/20 rounded-[24px] px-5 py-4">
+        <span class="text-xs font-bold text-blue-700 dark:text-blue-300">✨ AI拡張検索の結果を表示中</span>
+        <button onclick="clearSearch()" class="text-xs font-bold text-blue-600 dark:text-blue-400 bg-white dark:bg-blue-900/40 px-4 py-2 rounded-full hover:brightness-95 dark:hover:brightness-125 transition-all shrink-0">
+          すべて表示に戻す
+        </button>
+      </div>
+
+      <!-- 真の流動可変グリッド -->
+      <div id="asset-list" class="grid grid-cols-[repeat(auto-fill,minmax(400px,1fr))] gap-3 w-full">
+        <div class="col-span-full bg-white dark:bg-[#1e1f20] p-6 rounded-[24px] text-center text-xs text-slate-400 dark:text-slate-500 animate-pulse">
+          台帳ソースを同期中...
+        </div>
+      </div>
+    </div>
+
+    <!-- トップ戻りボタン -->
+    <button id="to-top-btn" onclick="backToTop()" title="トップに戻る" 
+      class="fixed bottom-6 right-6 z-50 w-11 h-11 bg-white dark:bg-[#1e1f20] text-slate-700 dark:text-slate-200 rounded-full shadow-lg border border-slate-200/50 dark:border-white/5 flex items-center justify-center text-sm font-bold opacity-0 translate-y-4 pointer-events-none transition-all duration-300 cursor-pointer group active:scale-90">
+      <span class="md:group-hover:-translate-y-0.5 transition-transform">▲</span>
+    </button>
+
+    <script>
+      // ==========================================
+      // 1. 定数と状態管理 (State & Constants)
+      // ==========================================
+      const FILE_TYPES = {
+        'MNL': { full: '📄 取扱説明書', color: 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300' },
+        'RCP': { full: '🧾 領収書',   color: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' },
+        'WRT': { full: '🛡️ 保証書',   color: 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300' },
+        'OTH': { full: '📁 その他',   color: 'bg-slate-100 text-slate-700 dark:bg-slate-800/60 dark:text-slate-300' }
+      };
+
+      const DISPLAY_STEP = 20;
+
+      let allAssets = [];
+      let currentAssets = [];
+      let filteredAssets = [];
+      let displayLimit = DISPLAY_STEP;
+      let activeLocation = 'ALL';
+      let activeLocationName = '';
+      let activeCategory = 'ALL';
+      let activeCategoryName = ''; 
+      let showDisposed = false; 
+      let isAiResult = false;
+
+      const utils = {
+        cleanUrl(rawUrl) {
+          let url = rawUrl || '';
+          const prefix = 'https://drive.google.com/file/d/';
+          if (url.startsWith(prefix + 'http')) {
+            url = url.replace(prefix, '');
+            if (url.endsWith('/view')) url = url.slice(0, -5);
+          }
+          return url;
+        },
+        formatDate(dateVal) {
+          if (!dateVal || String(dateVal).trim() === '' || dateVal === 'undefined') return '';
+          try {
+            const d = new Date(dateVal);
+            if (!isNaN(d.getTime())) {
+              const mm = String(d.getMonth() + 1).padStart(2, '0');
+              const dd = String(d.getDate()).padStart(2, '0');
+              return `${d.getFullYear()}/${mm}/${dd}`;
+            }
+          } catch (e) {}
+          return String(dateVal).trim();
+        },
+        getCardColor() {
+          return 'bg-white dark:bg-[#1e1f20]'; 
+        },
+        
+        // 🚀 【新規追加】最強の検索正規化（前処理クレンジング）エンジン
+        normalizeText(rawStr) {
+          if (!rawStr) return '';
+          let str = String(rawStr);
+          
+          // ① 全角スペースを半角スペースに集約
+          str = str.replace(/\u3000/g, ' ');
+          
+          // ② 全角英数字を半角英数字に強制置換
+          str = str.replace(/[\uFF10-\uFF19\uFF21-\uFF3A\uFF41-\uFF5A]/g, (s) => {
+            return String.fromCharCode(s.charCodeAt(0) - 0xFEE0);
+          });
+          
+          // ③ ひらがなを全角カタカナに一律統一（表記揺れの完全同一視）
+          str = str.replace(/[\u3041-\u3096]/g, (s) => {
+            return String.fromCharCode(s.charCodeAt(0) + 0x60);
+          });
+          
+          // ④ 英大文字を小文字に統一
+          str = str.toLowerCase();
+          
+          // ⑤ 業務システム標準の「法人格・組織名ノイズ」トリミング（部分一致の邪魔者を消去）
+          const noisePatterns = [
+            /株式会社/g, /有限会社/g, /合同会社/g, 
+            /ホールディングス/g,
+            /co\.,?\s*ltd\.?/gi, /inc\.?/gi, /corp\.?/gi,
+            /（株）/g, /\(株\)/g
+          ];
+          noisePatterns.forEach(pattern => {
+            str = str.replace(pattern, '');
+          });
+          
+          // ⑥ 表記揺れ（スペースの有無）に殺されないよう、すべての空白を消去して完全密着させる
+          return str.replace(/\s+/g, '').trim();
+        }
+      };
+
+      // ==========================================
+      // 2. 初期化とデータフェッチ (Initialization)
+      // ==========================================
+      window.onload = function() {
+        if (typeof google === 'undefined' || !google.script) {
+          console.log("ローカルプレビュー環境: モックデータを読み込みます");
+          const mockData = [
+            { id: "H01ACC001", name: "BALMUDA GreenFan C2", maker: "バルミューダ", model: "A02A-WK", cat: "APL", catName: "家電", loc: "LIV", locName: "リビング", purchaseDate: "2024-05-10", status: "active", files: [{ type: "MNL", url: "https://example.com" }] },
+            { id: "H01ACC002", name: "Jabra Engage 65 Mono", maker: "Jabra", model: "WHB013BS", cat: "PC", catName: "ガジェット", loc: "STU", locName: "書斎", purchaseDate: "2023-11-01", status: "active", files: [{ type: "MNL", url: "https://example.com" }, { type: "RCP", url: "https://example.com" }] }
+          ];
+          allAssets = mockData; currentAssets = mockData; initUI(); return;
+        }
+
+        google.script.run
+          .withSuccessHandler((assets) => {
+            allAssets = assets;
+            currentAssets = assets;
+            if (allAssets.length === 0) {
+              renderEmptyState('登録された資産はまだありません。');
+              return;
+            }
+            initUI();
+          })
+          .withFailureHandler((err) => {
+            document.getElementById('asset-list').innerHTML = `<div class="col-span-full p-6 text-center text-sm text-rose-500 bg-rose-50 dark:bg-rose-950/20 rounded-[24px]">読み込みに失敗しました: ${err.message}</div>`;
+          })
+          .getAssetStorageData("");
+      };
+
+      function initUI() {
+        buildChips('location-chips', 'loc', 'locName', (code, name) => { activeLocation = code; activeLocationName = name; });
+        buildChips('category-chips', 'cat', 'catName', (code, name) => { activeCategory = code; activeCategoryName = name; });
+        applyFiltersAndRender();
+      }
+
+      // ==========================================
+      // 3. UIコンポーネント構築 (UI Builders)
+      // ==========================================
+      function buildChips(containerId, dataKey, labelKey, stateUpdater) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+
+        const seen = new Set();
+        const uniqueItems = [];
+
+        allAssets.forEach(a => {
+          const val = a[dataKey];
+          if (val && !seen.has(val)) {
+            seen.add(val);
+            uniqueItems.push({ code: val, name: a[labelKey] });
+          }
+        });
+
+        const otherItems = uniqueItems.filter(item => {
+          const nameStr = item.name ? String(item.name) : '';
+          return item.code === 'OTH' || nameStr.includes('その他');
+        });
+        
+        const normalItems = uniqueItems.filter(item => {
+          const nameStr = item.name ? String(item.name) : '';
+          return item.code !== 'OTH' && !nameStr.includes('その他');
+        });
+
+        normalItems.sort((a, b) => {
+          const nameA = String(a.name || '').trim();
+          const nameB = String(b.name || '').trim();
+          return nameA.localeCompare(nameB, 'ja');
+        });
+
+        const items = [{ code: 'ALL', name: 'すべて' }, ...normalItems, ...otherItems];
+
+        items.forEach(item => {
+          const chip = document.createElement('div');
+          const isActive = item.code === 'ALL';
+          chip.className = getChipClass(isActive);
+          chip.innerText = item.name || '未分類';
+          chip.dataset.code = item.code;
+
+          chip.onclick = function() {
+            container.querySelectorAll('div').forEach(c => c.className = getChipClass(false));
+            this.className = getChipClass(true);
+            stateUpdater(item.code, item.name || '未分類');
+            applyFiltersAndRender();
+          };
+
+          container.appendChild(chip);
+        });
+      }
+
+      function getChipClass(isActive) {
+        const base = 'text-xs font-bold px-4 py-2.5 rounded-full cursor-pointer transition-all duration-200 whitespace-nowrap ';
+        return base + (isActive
+          ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs'
+          : 'bg-[#f8f9fa] dark:bg-[#282a2c] hover:brightness-95 dark:hover:brightness-110 text-slate-700 dark:text-slate-200');
+      }
+
+      function toggleFilters() {
+        const container = document.getElementById('filter-container');
+        const icon = document.getElementById('filter-icon');
+        const isHidden = container.classList.contains('hidden');
+
+        container.classList.toggle('hidden', !isHidden);
+        container.classList.toggle('flex', isHidden);
+        icon.innerText = isHidden ? '▲' : '▼';
+      }
+
+      window.removeFilter = function(type) {
+        if (type === 'loc') { activeLocation = 'ALL'; activeLocationName = ''; resetChipSelection('location-chips'); }
+        if (type === 'cat') { activeCategory = 'ALL'; activeCategoryName = ''; resetChipSelection('category-chips'); }
+        applyFiltersAndRender();
+      }
+
+      function updateFilterIndicators() {
+        const badge = document.getElementById('filter-badge');
+        const tagContainer = document.getElementById('active-filter-tags');
+
+        const activeFilters = [];
+        if (activeLocation !== 'ALL') activeFilters.push({ type: 'loc', label: activeLocationName });
+        if (activeCategory !== 'ALL') activeFilters.push({ type: 'cat', label: activeCategoryName });
+
+        badge.innerText = activeFilters.length;
+        badge.classList.toggle('hidden', activeFilters.length === 0);
+        badge.classList.toggle('flex', activeFilters.length > 0);
+
+        if (activeFilters.length > 0) {
+          tagContainer.innerHTML = activeFilters.map(f => `
+            <span class="inline-flex items-center gap-1 bg-[#f8f9fa] dark:bg-[#282a2c] text-slate-800 dark:text-slate-200 text-[11px] font-bold pl-3 pr-1 py-1 rounded-full border border-slate-200/40 dark:border-white/5">
+              ${f.label}
+              <button onclick="removeFilter('${f.type}')" class="w-7 h-7 flex items-center justify-center text-slate-400 dark:text-slate-400 text-sm hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">×</button>
+            </span>
+          `).join('');
+          tagContainer.classList.remove('hidden');
+          tagContainer.classList.add('flex');
+        } else {
+          tagContainer.classList.add('hidden');
+          tagContainer.classList.remove('flex');
+        }
+      }
+
+      function resetChipSelection(containerId) {
+        const container = document.getElementById(containerId);
+        container.querySelectorAll('div').forEach(c => {
+          c.className = getChipClass(c.dataset.code === 'ALL');
+        });
+      }
+
+      window.toggleDisposed = function() {
+        showDisposed = document.getElementById('show-disposed-check').checked;
+        applyFiltersAndRender();
+      }
+
+      // ==========================================
+      // 4. アクションとロジック (Actions & Logic)
+      // ==========================================
+      window.toggleClearButton = function() {
+        const hasValue = document.getElementById('search-input').value.length > 0;
+        const clearBtn = document.getElementById('clear-btn');
+        clearBtn.classList.toggle('hidden', !hasValue);
+        clearBtn.classList.toggle('flex', hasValue);
+      }
+
+      function setSearchingState(isSearching) {
+        document.getElementById('search-input').disabled = isSearching;
+      }
+
+      // 🚀 【進化】クエリ正規化エンジンを組み込んだ超強固な検索処理
+      window.executeSearch = function() {
+        const rawQuery = document.getElementById('search-input').value.trim();
+        if (!rawQuery) {
+          clearSearch();
+          return;
+        }
+
+        // 入力文字を「半角小文字・カタカナ・ノイズなし」に超圧縮
+        const normalizedQuery = utils.normalizeText(rawQuery);
+
+        const searchKeys = ['name', 'maker', 'model', 'cat', 'catName', 'remarks'];
+        
+        // ローカル台帳データも同じルールでその場で正規化しながら1対1で部分一致判定
+        const localHits = allAssets.filter(a => 
+          searchKeys.some(key => {
+            if (!a[key]) return false;
+            return utils.normalizeText(a[key]).includes(normalizedQuery);
+          })
+        );
+
+        // ローカルに1件でも正規化ヒットがあれば、サーバー(AI)を叩かずに最速一発表示
+        if (localHits.length > 0) {
+          isAiResult = false;
+          document.getElementById('ai-result-banner').classList.add('hidden');
+          currentAssets = localHits;
+          applyFiltersAndRender();
+          return;
+        }
+
+        // ローカルで全滅した場合のみ、綺麗にクレンジングされたクエリを抱えてAI拡張検索へ突入
+        setSearchingState(true);
+        renderLoadingState('AI拡張検索中...');
+
+        google.script.run
+          .withSuccessHandler((results) => {
+            setSearchingState(false);
+            resetFiltersForAiResult();
+            isAiResult = true;
+
+            const sortSelect = document.getElementById('sort-select');
+            sortSelect.innerHTML = `
+              <option value="ai_score" selected>✨ AIおすすめ順</option>
+              <option value="name_asc">名前順 (あ-ん)</option>
+              <option value="maker_asc">メーカー順</option>
+              <option value="date_desc">購入日が新しい順</option>
+              <option value="date_asc">購入日が古い順</option>
+              <option value="default">システム登録順</option>
+            `;
+
+            document.getElementById('ai-result-banner').classList.replace('hidden', 'flex');
+            currentAssets = results;
+            applyFiltersAndRender();
+          })
+          .withFailureHandler((err) => {
+            setSearchingState(false);
+            renderEmptyState(`検索に失敗しました: ${err.message}`);
+          })
+          .EXCLUSIVE_AI_VECTOR_SEARCH_ENTRANCE(normalizedQuery); 
+      }
+
+      function resetFiltersForAiResult() {
+        activeLocation = 'ALL'; activeLocationName = '';
+        activeCategory = 'ALL'; activeCategoryName = '';
+        resetChipSelection('location-chips');
+        resetChipSelection('category-chips');
+        document.getElementById('show-disposed-check').checked = false;
+        showDisposed = false;
+      }
+
+      window.clearSearch = function() {
+        document.getElementById('search-input').value = '';
+        toggleClearButton();
+        isAiResult = false;
+        document.getElementById('ai-result-banner').classList.replace('flex', 'hidden');
+
+        const sortSelect = document.getElementById('sort-select');
+        sortSelect.innerHTML = `
+          <option value="name_asc" selected>名前順 (あ-ん)</option>
+          <option value="maker_asc">メーカー順</option>
+          <option value="date_desc">購入日が新しい順</option>
+          <option value="date_asc">購入日が古い順</option>
+          <option value="default">システム登録順</option>
+        `;
+
+        currentAssets = allAssets;
+        applyFiltersAndRender();
+      }
+
+      window.executeSort = function() {
+        applyFiltersAndRender();
+      }
+
+      function applyFiltersAndRender() {
+        let filtered = currentAssets.filter(a => {
+          if (!a || !a.name) return false;
+
+          const matchLoc = (activeLocation === 'ALL' || a.loc === activeLocation);
+          const matchCat = (activeCategory === 'ALL' || a.cat === activeCategory);
+          
+          const val = a.status ? String(a.status).trim().toLowerCase() : '';
+          const isAssetActive = (val === '' || val === 'active' || val === '正常'); 
+          const matchStatus = showDisposed ? true : isAssetActive;
+          
+          return matchLoc && matchCat && matchStatus;
+        });
+
+        const sortType = document.getElementById('sort-select').value;
+        
+        if (sortType !== 'ai_score') {
+          filtered.sort((a, b) => {
+            const nameA = String(a.name || '').trim();
+            const nameB = String(b.name || '').trim();
+            const makerA = String(a.maker || '').trim();
+            const makerB = String(b.maker || '').trim();
+
+            if (sortType === 'name_asc') return nameA.localeCompare(nameB, 'ja');
+            if (sortType === 'maker_asc') return makerA.localeCompare(makerB, 'ja');
+            
+            if (sortType === 'date_desc') {
+              return (utils.formatDate(b.purchaseDate) || '0000/00/00').localeCompare(utils.formatDate(a.purchaseDate) || '0000/00/00');
+            }
+            if (sortType === 'date_asc') {
+              return (utils.formatDate(a.purchaseDate) || '9999/12/31').localeCompare(utils.formatDate(b.purchaseDate) || '9999/12/31');
+            }
+            return 0;
+          });
+        }
+
+        filteredAssets = filtered;
+        displayLimit = DISPLAY_STEP;
+
+        document.getElementById('shown-count').innerText = filteredAssets.length;
+        document.getElementById('total-suffix').innerText = ` / ${isAiResult ? currentAssets.length : allAssets.length}件`;
+
+        updateFilterIndicators();
+        renderList();
+      }
+
+      window.backToTop = function() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        if (typeof clearSearch === 'function') { clearSearch(); }
+      }
+
+      window.addEventListener('scroll', () => {
+        const btn = document.getElementById('to-top-btn');
+        if (window.scrollY > 300) {
+          btn.classList.remove('opacity-0', 'translate-y-4', 'pointer-events-none');
+          btn.classList.add('opacity-100', 'translate-y-0');
+        } else {
+          btn.classList.remove('opacity-100', 'translate-y-0');
+          btn.classList.add('opacity-0', 'translate-y-4', 'pointer-events-none');
+        }
+      });
+
+      window.loadMore = function() {
+        displayLimit += DISPLAY_STEP;
+        renderList();
+      }
+
+      // ==========================================
+      // 5. レンダリングエンジン (Rendering Engine)
+      // ==========================================
+      function renderList() {
+        const listContainer = document.getElementById('asset-list');
+
+        if (filteredAssets.length === 0) {
+          const msg = isAiResult ? 'AI検索でも該当する資産は見つかりませんでした。' :
+                      (activeLocation !== 'ALL' || activeCategory !== 'ALL') ? 'この絞り込み条件に一致する資産はありません。フィルターを外すと表示されます。' :
+                      '該当する資産が見つかりません。';
+          renderEmptyState(msg);
+          return;
+        }
+
+        const itemsToRender = filteredAssets.slice(0, displayLimit);
+
+        let html = itemsToRender.map(a => {
+          const val = a.status ? String(a.status).trim().toLowerCase() : '';
+          const isAssetActive = (val === '' || val === 'active' || val === '正常');
+          const opacityClass = isAssetActive ? '' : 'dark:brightness-75';
+          const cardBgColor = utils.getCardColor();
+
+          return `
+            <div class="${cardBgColor} py-4 px-4 md:py-4.5 md:px-5 rounded-[24px] hover:brightness-95 dark:hover:brightness-110 flex flex-row items-stretch justify-between gap-4 transition-all duration-200 cursor-default shadow-xs border border-slate-200/20 dark:border-white/5 ${opacityClass}">
+              ${buildInfoHtml(a, isAssetActive)}
+              ${buildButtonsHtml(a.files, isAssetActive)}
+            </div>
+          `;
+        }).join('');
+
+        if (filteredAssets.length > displayLimit) {
+          html += `
+            <div class="col-span-full flex justify-center mt-3 md:mt-4">
+              <button onclick="loadMore()" class="px-6 py-3 bg-white dark:bg-[#1e1f20] rounded-full text-xs font-bold text-slate-700 dark:text-slate-200 hover:brightness-95 dark:hover:brightness-110 transition-colors flex items-center gap-2 cursor-pointer shadow-xs border border-slate-200/20 dark:border-white/5">
+                さらに表示する <span class="bg-slate-100 dark:bg-[#282a2c] px-2 py-0.5 rounded-full text-[10px]">残り${filteredAssets.length - displayLimit}件</span>
+              </button>
+            </div>
+          `;
+        }
+
+        listContainer.innerHTML = html;
+      }
+
+      function buildInfoHtml(a, isAssetActive) {
+        const formattedDate = utils.formatDate(a.purchaseDate);
+        const purchaseDateRow = formattedDate 
+          ? `<div class="token-text-secondary text-xs font-bold">購入: ${formattedDate}</div>` 
+          : '';
+        
+        const statusBadge = isAssetActive ? '' : `<span class="ml-2 px-2 py-0.5 bg-rose-500/10 text-rose-600 dark:text-rose-400 font-bold rounded text-[10px] tracking-wide border border-rose-500/20">台帳から除外済</span>`;
+        const titleTextClass = isAssetActive ? 'token-text-primary' : 'text-slate-400 dark:text-slate-500 line-through';
+
+        return `
+          <div class="flex flex-col flex-1 min-w-0 h-full justify-between">
+            
+            <!-- 📌 1. 上段：タグエリア（左上完全固定） -->
+            <div class="flex items-center gap-2 flex-wrap shrink-0">
+              <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-black/5 dark:bg-white/10 text-slate-800 dark:text-slate-200 tracking-wider">${a.catName || a.cat || '未分類'}</span>
+              <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-black/5 dark:bg-white/10 text-slate-800 dark:text-slate-200 tracking-wider">${a.locName || a.loc || '未定'}</span>
+            </div>
+            
+            <!-- 🚀 2. 中段：製品名（完全可変縦中央浮遊） -->
+            <div class="flex-1 flex items-center min-w-0 py-2">
+              <h2 class="text-base md:text-lg font-black ${titleTextClass} truncate pr-2 tracking-tight token-mb-loose">${a.name || '名称未設定'}</h2>
+            </div>
+            
+            <!-- 📌 3. 下段：詳細情報群（左下完全固定） -->
+            <div class="flex flex-col token-gap-tight shrink-0 token-text-secondary">
+              <!-- メーカー・型番 -->
+              <div class="flex items-center min-w-0 text-sm font-bold">
+                <span class="truncate tracking-tight">${a.maker || 'Unknown'}</span>
+                <span class="text-slate-300 dark:text-slate-600 mx-1.5 shrink-0">|</span>
+                <span class="font-mono tracking-tight truncate font-bold">${a.model || 'N/A'}</span>
+              </div>
+              
+              <!-- 購入日 -->
+              ${purchaseDateRow}
+              
+              <!-- ID -->
+              <div class="font-mono text-[11px] token-text-tertiary flex items-center flex-wrap font-bold">
+                ID: <span class="font-black ml-1">${a.id || 'N/A'}</span>${statusBadge}
+              </div>
+            </div>
+
+          </div>
+        `;
+      }
+
+      function buildButtonsHtml(files, isAssetActive) {
+        let html = '<div class="flex flex-col items-end gap-1.5 shrink-0 ml-auto w-[115px] pt-0.5">';
+        if (!files || files.length === 0) {
+          return html + `<span class="shrink-0 w-full text-[11px] font-bold text-slate-400 dark:text-slate-500 px-2 italic whitespace-nowrap text-right pt-2.5">書類未登録</span></div>`;
+        }
+
+        const counts = {};
+        files.forEach(f => {
+          counts[f.type] = (counts[f.type] || 0) + 1;
+          const suffix = counts[f.type] > 1 ? counts[f.type] : '';
+          const typeDef = FILE_TYPES[f.type] || FILE_TYPES['OTH'];
+
+          const targetUrl = utils.cleanUrl(f.url);
+          const isWebMnl = (f.type === 'MNL' && targetUrl.startsWith('http') && !targetUrl.includes('drive.google.com'));
+          const displayText = isWebMnl ? `🌐 取説(Web)${suffix}` : `${typeDef.full}${suffix}`;
+
+          const baseClass = `shrink-0 w-full h-11 px-2.5 text-[11px] font-black rounded-xl text-center flex items-center justify-center whitespace-nowrap transition-all shadow-xs border border-slate-200/10 dark:border-white/5 `;
+          
+          html += isAssetActive 
+            ? `<a href="${targetUrl}" target="_blank" class="${baseClass} ${typeDef.color} hover:brightness-95 active:bg-slate-950 active:text-white dark:active:bg-white dark:active:text-slate-950"><span>${displayText}</span></a>`
+            : `<div class="${baseClass} bg-black/5 dark:bg-white/5 text-slate-400 dark:text-slate-600 pointer-events-none line-through" title="除外済のため閲覧できません"><span>${displayText}</span></div>`;
+        });
+
+        return html + '</div>';
+      }
+
+      function renderEmptyState(message) {
+        document.getElementById('asset-list').innerHTML = `
+          <div class="col-span-full bg-white dark:bg-[#1e1f20] p-10 text-center text-sm font-bold text-slate-600 dark:text-slate-300 rounded-[24px] border border-slate-200/20 dark:border-white/5">
+            ${message}
+          </div>
+        `;
+      }
+
+      function renderLoadingState(message) {
+        document.getElementById('asset-list').innerHTML = `
+          <div class="col-span-full bg-white dark:bg-[#1e1f20] py-12 rounded-[24px] flex flex-col items-center gap-4 border border-slate-200/20 dark:border-white/5">
+            <div class="w-8 h-8 border-4 border-slate-100 dark:border-white/5 border-t-blue-500 rounded-full animate-spin"></div>
+            <div class="text-sm font-bold text-slate-600 dark:text-slate-300">${message}</div>
+          </div>
+        `;
+      }
+
+      // ==========================================
+      // 🚀 6. 操作のUD：爆速キーボード完結システム
+      // ==========================================
+      window.addEventListener('keydown', (e) => {
+        const isTyping = e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT';
+
+        if (e.key === '/' && !isTyping) {
+          e.preventDefault(); 
+          document.getElementById('search-input').focus();
+        }
+
+        if (e.key === 'Escape') {
+          clearSearch();
+          if (document.activeElement) {
+            document.activeElement.blur();
+          }
+        }
+      });
+    </script>
+  </body>
+</html>

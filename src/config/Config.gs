@@ -1,0 +1,71 @@
+// =============================================================================
+// Config.gs
+//
+// 役割: Configシートからインフラ設定を読み込む
+// 責任: フォルダID・APIキー・AIモデル名の管理のみ
+//       拠点・カテゴリ（マスタ）は持たない → MastersDAO.gs が担当
+//
+// 流用: 流用不可。アプリごとに設定値が変わるため。
+//       ただし読み込み方の構造は他システムの参考にできる。
+//
+// 【Configシートの形式】
+//   A列=キー、B列=値
+//   GEMINI_MODEL, INBOX_FOLDER_ID, DOCS_FOLDER_ID,
+//   UNRESOLVED_FOLDER_ID, ASSET_MASTER_ID
+//
+// 【他モジュールへの依存】Constants（シート名の定数 SHEET のみ）
+// =============================================================================
+
+const Config = (() => {
+  let _cache = null;
+ 
+  return {
+    load() {
+      if (_cache) return _cache;
+ 
+      const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(Constants.SHEET.CONFIG);
+      if (!sheet) throw new Error('Configシートが見つかりません。');
+ 
+      const lastRow = sheet.getLastRow();
+      if (lastRow === 0) throw new Error('Configシートが空です。設定値を入力してください。');
+ 
+      const raw = {};
+      sheet.getRange(1, 1, lastRow, 2).getValues()
+        .forEach(([k, v]) => { if (k) raw[String(k).trim()] = v; });
+ 
+      _cache = {
+        GEMINI_API_KEY:       String(raw['GEMINI_API_KEY']       || ''),
+        GEMINI_MODEL:         String(raw['GEMINI_MODEL']         || ''),
+        GEMINI_EMBED_MODEL:   String(raw['GEMINI_EMBED_MODEL']   || ''),
+        // 【次元数の明示固定】Configシートの GEMINI_EMBED_DIMENSION 行が唯一の真実源。
+        //   ここにハードコードされた既定値は置かない（getModelSettingsと同じfail-fast方針）。
+        //   未設定・不正値ならこの場でエラーにし、静かに間違った次元で走らせない。
+        GEMINI_EMBED_DIMENSION: (() => {
+          const n = parseInt(raw['GEMINI_EMBED_DIMENSION'], 10);
+          if (!n || n <= 0) {
+            throw new Error('Configシートに GEMINI_EMBED_DIMENSION（次元数の数値）が正しく設定されていません。例: 768');
+          }
+          return n;
+        })(),
+        INBOX_FOLDER_ID:      String(raw['INBOX_FOLDER_ID']      || ''),
+        DOCS_FOLDER_ID:       String(raw['DOCS_FOLDER_ID']       || ''),
+        UNRESOLVED_FOLDER_ID: String(raw['UNRESOLVED_FOLDER_ID'] || ''),
+        ASSET_MASTER_ID:      String(raw['ASSET_MASTER_ID']      || ''),
+        // 【検索の足切り閾値】この値に「正解」は無く運用しながら調整するものなので、
+        //   コード側に決め打ちの数値は置かない。未設定時は0（＝足切りしない）という
+        //   中立な既定値にとどめ、閾値を持ちたければConfigシートに明示的に追加してもらう。
+        SEARCH_MIN_SCORE: raw['GEMINI_SEARCH_MIN_SCORE']
+          ? parseFloat(raw['GEMINI_SEARCH_MIN_SCORE'])
+          : 0,
+      };
+ 
+      const missing = ['GEMINI_API_KEY', 'INBOX_FOLDER_ID', 'DOCS_FOLDER_ID', 'UNRESOLVED_FOLDER_ID']
+        .filter(k => !_cache[k]);
+      if (missing.length) throw new Error(`Configシートの必須項目が未入力です：${missing.join(', ')}`);
+ 
+      return _cache;
+    },
+ 
+    clear() { _cache = null; },
+  };
+})();
