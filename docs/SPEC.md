@@ -78,6 +78,7 @@ src/
 | `GEMINI_EMBED_MODEL` | 任意（空文字許容） | Embedding生成用モデル名 |
 | `ASSET_MASTER_ID` | 任意（空文字許容） | 台帳スプレッドシートのID。未設定時はアクティブなスプレッドシート自身を台帳として使う（`AssetMasterDAO._getSheet`） |
 | `GEMINI_SEARCH_MIN_SCORE` | 任意 | 検索結果の足切りスコア閾値。未設定時は `0`（足切りしない）。**「適切な閾値」はコードが決め打ちすべきものではない**という方針でConfigシート側に置く |
+| `ADMIN_EMAILS` | 任意（空文字許容） | 管理者のGoogleアカウントのメールアドレスをカンマ区切りで1セルに記入する（例: `taro@gmail.com,hanako@gmail.com`）。`Entry.gs`の`getCurrentUserRole()`がUIの出し分け（登録FABの表示可否）にのみ使用する。未設定でもエラーにせず、空配列として扱われる（fail-fastの対象外。閲覧機能自体はこれが無くても成立するため） |
 
 必須4項目（`GEMINI_API_KEY` / `INBOX_FOLDER_ID` / `DOCS_FOLDER_ID` / `UNRESOLVED_FOLDER_ID`）のいずれかが空なら
 `Config.load()` の時点でエラーになる（fail-fast）。

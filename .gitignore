@@ -1,0 +1,10 @@
+node_modules/
+
+# clasp の認証情報。OAuthトークンを含むため絶対にコミットしない。
+# 通常は ~/.clasprc.json（ホームディレクトリ）に置かれるが、
+# clasp はプロジェクト直下への配置もサポートしているため念のため除外する。
+.clasprc.json
+
+# OS/エディタのノイズ
+.DS_Store
+Thumbs.db

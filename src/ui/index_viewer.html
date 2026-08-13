@@ -5,13 +5,27 @@
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
-    
+    <meta name="apple-mobile-web-app-title" content="Found">
+    <meta name="application-name" content="Found">
+    <meta name="theme-color" content="#0f172a">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- アイコン一式：GASは固定パスでの静的ファイル配信ができないため、base64のdata URIとして埋め込む -->
+    <!-- favicon（タブ・ブックマーク表示用）：モダンブラウザ優先でSVG、フォールバックでPNG -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSI+CiAgPCEtLSDog4zmma/vvJrop5LkuLjjgrnjgq/jgqjjgqLvvIjjgrfjgrnjg4bjg6Djga5yb3VuZGVkLVsyNHB4XeODiOODvOODs+OCkui4j+ilsu+8iSAtLT4KICA8cmVjdCB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHJ4PSI4IiBmaWxsPSIjMGYxNzJhIi8+CiAgPCEtLSDjg57jg7zjgq/vvJrmlbTnkIbjgZXjgozjgZ/os4fnlKPvvJ3opo/liYfmraPjgZfjgY/kuKbjgpPjgaAz5pys44Gu44OQ44O877yI5Y+w5bizL+ajmuOBruODoeOCv+ODleOCoeODvO+8iSAtLT4KICA8cmVjdCB4PSI4IiB5PSI5IiB3aWR0aD0iMTYiIGhlaWdodD0iMyIgcng9IjEuNSIgZmlsbD0id2hpdGUiLz4KICA8cmVjdCB4PSI4IiB5PSIxNC41IiB3aWR0aD0iMTYiIGhlaWdodD0iMyIgcng9IjEuNSIgZmlsbD0id2hpdGUiIGZpbGwtb3BhY2l0eT0iMC43NSIvPgogIDxyZWN0IHg9IjgiIHk9IjIwIiB3aWR0aD0iMTAiIGhlaWdodD0iMyIgcng9IjEuNSIgZmlsbD0id2hpdGUiIGZpbGwtb3BhY2l0eT0iMC41Ii8+Cjwvc3ZnPgo=">
+    <link rel="alternate icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA0UlEQVR4nNWXsRHCMAxFsS497vAM8RKMltFYgsxAOjIBVLkDY0U/MpHgl5bk9yPJRcKB0fHUP7iYRvM0htr5x+G3wZIRsoTXGMQFrEyQNbw0QVLi3goeX/8q9w64G+iQpPvtqgbElFfjYgda4Ei9+whEA1ILW+vdnyG6hBctIKZ8XosjS6iGI/W/v4TuBqQZttb/zSsYpJyYsphTE/IKoIvRvM0G9hayhANykXYE7kvoPwLuj8VC8zQG/w4sTqzBC5PKA0v4mwErEyWDBVr9nj8BLEhP3mLGFwwAAAAASUVORK5CYII=">
+
+    <!-- ホーム画面追加時のアイコン（iOS: apple-touch-icon / Android・PWA全般） -->
+    <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAYAAAA9zQYyAAADIUlEQVR4nO3cwY0USRRF0QTNnt7RNtBOjGmYhhP4wBIPelYltUZdC0RC1rs6x4KIX1ehkCJVHz59/vJ6QMTHqxcAZxI0KYImRdCkCJoUQZMiaFIETYqgSRE0KYImRdCkCJoUQZMiaFIETYqgSRE0KYImRdCkCJoUQZMiaFIETYqgSRE0KYImRdCkCJoUQZMiaFIETYqgSRE0KYImRdCkCJoUQZMiaFIETYqgSRE0KYImRdCkCJoUQZMiaFIETYqgSRE0Kf9cvYAz/fzx/eolzHp6frl6Caf48Onzl9erF/G7hHye9bDnrxxiPtf6PKeDXh/+o1qe62zQy0NfsDrf2aDhPZNBr54eaxbnPBk03CNoUgRNiqBJETQpk0GvP8+uWJzzZNBwz2zQi6fHktX5zgZ9HLtDf3TLc50O+ji2h/+I1ueZ+B76ZvGp9lGsh3yTChrmrxzwlqBJETQpgiZF0KQImhRBkyJoUgRNiqBJETQpgial9ne6365ew6qn55d/r17DGRJf2wn5POthz185xHyu9XlOB70+/Ee1PNfZoJeHvmB1vrNBw3smg149PdYsznkyaLhH0KQImhRBkzIZ9Ppr1orFOU8GDffMBr14eixZne9s0MexO/RHtzzX6aCPY3v4j2h9nonPR28WX7YexXrIN6mgYf7KAW8JmhRBkyJoUgRNiqBJETQpgiZF0KQImhRBkyJoUmr/Pvr16jX8qqfnl69Xr6Ek8bXdYsj/J+xzzF85CjEfR2cfV5sOuhZBbT9XmA26+uNX9/W3zAYN75kMun6K1ff3J00GDfcImhRBkyJoUgRNymTQ9Wfi+v7+pMmg4Z7ZoKunWHVff8ts0MfR+/Fr+7nCdNDH0Ymgso+rJb6Hvll8MhbyuVJBw/yVA94SNCmCJkXQpAiaFEGTImhSBE2KoEkRNCmCJkXQpAiaFEGTImhSBE2KoEkRNCmCJkXQpAiaFEGTImhSBE2KoEkRNCmCJkXQpAiaFEGTImhSBE2KoEkRNCmCJkXQpAiaFEGTImhSBE2KoEkRNCmCJkXQpAiaFEGTImhSBE2KoEn5Dw2hh3s6ekJMAAAAAElFTkSuQmCC">
 
     <!-- ロゴ見出し（Foundタイトル）にのみ使うWebフォント -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght=900&display=swap" rel="stylesheet">
+
+    <!-- アイコン：絵文字(OS依存でトーン&マナーが崩れる)からMaterial Symbolsへ統一 -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..500,0..1,0" rel="stylesheet">
 
     <style>
       /* 引っ張りバウンス時に背景色の外側（白帯）が見えるのを防ぐ */
@@ -53,6 +67,25 @@
       * { -webkit-tap-highlight-color: transparent; }
       .no-scrollbar::-webkit-scrollbar { display: none; }
       .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+      /* スクリーンリーダー専用テキスト：視覚的には隠すが、支援技術には読み上げさせる */
+      .sr-only {
+        position: absolute;
+        width: 1px; height: 1px;
+        padding: 0; margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      /* Material Symbols共通設定：文字サイズに追従させ、行の高さをテキストと揃える */
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+        font-size: 1.15em;
+        line-height: 1;
+        vertical-align: -0.2em;
+      }
       
       body { 
         font-family: "BIZ UDPGothic", "Hiragino Kaku Gothic ProN", "Meiryo UI", sans-serif !important; 
@@ -73,103 +106,204 @@
     <div class="w-full max-w-none mx-auto flex flex-col gap-5 relative z-10 px-2 md:px-6">
 
       <!-- ヘッダーエリア -->
-      <div class="flex items-end justify-between px-1">
+      <header class="flex items-end justify-between px-1">
         <div>
-          <h1 onclick="backToTop()" class="noto-title text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight cursor-pointer hover:opacity-80 active:scale-98 transition-all">Found</h1>
+          <h1 onclick="backToTop()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();backToTop();}" role="button" tabindex="0" aria-label="トップに戻る（検索・フィルターをリセット）" class="flex items-center gap-2 cursor-pointer hover:opacity-80 active:scale-98 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 rounded w-fit">
+            <!-- ロゴマーク：favicon/apple-touch-iconと同一意匠（整理された台帳＝3本のバー）。
+                 currentColorでテキスト色に追従させ、ダークモード切り替え時も色指定を二重管理しない -->
+            <svg class="text-slate-900 dark:text-slate-100" width="22" height="22" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+              <rect width="32" height="32" rx="8" fill="currentColor"/>
+              <rect x="8" y="9" width="16" height="3" rx="1.5" class="fill-white dark:fill-slate-900"/>
+              <rect x="8" y="14.5" width="16" height="3" rx="1.5" class="fill-white dark:fill-slate-900" fill-opacity="0.75"/>
+              <rect x="8" y="20" width="10" height="3" rx="1.5" class="fill-white dark:fill-slate-900" fill-opacity="0.5"/>
+            </svg>
+            <span class="noto-title text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Found</span>
+          </h1>
           <p class="text-[10px] text-slate-400 dark:text-slate-500 font-bold mt-0.5 tracking-wider uppercase">Asset Master</p>
         </div>
-        <div class="bg-white dark:bg-[#1e1f20] text-xs font-bold px-4 py-2 rounded-full text-slate-700 dark:text-slate-300 transition-colors whitespace-nowrap shadow-xs">
+        <div class="bg-white dark:bg-[#1e1f20] text-xs font-bold px-4 py-2 rounded-full text-slate-700 dark:text-slate-300 transition-colors whitespace-nowrap shadow-xs" aria-live="polite">
           <span id="shown-count" class="text-slate-900 dark:text-white">0</span><span id="total-suffix" class="text-slate-500"> / 0件</span>
         </div>
+      </header>
+
+      <!-- 検索バー：Google検索のように単体で浮かせる。
+           ラッパー自体には背景・境界線・ぼかしを一切持たせない(stickyのためだけの透明な入れ物)。
+           検索窓のピル自体がすでに不透明な背景とshadowを持っているため、視認性はそれで十分であり、
+           ラッパーに別の見た目を足すと、ピルの外側に不要な「枠」が見えてしまう
+           (これまで①不透明パネル②ガラスパネルの両方で発生した問題) -->
+      <search class="sticky top-2 md:top-4 z-30 flex flex-col gap-3 transition-all duration-300">
+
+        <div class="relative flex items-center h-12">
+          <label for="search-input" class="sr-only">資産名・型番・用途で検索</label>
+          <input type="search" id="search-input" oninput="toggleClearButton()" onkeydown="if(event.key === 'Enter') executeSearch()" placeholder="検索"
+            class="w-full h-full pl-12 pr-[6.5rem] bg-white dark:bg-[#1e1f20] border border-slate-200/70 dark:border-white/10 rounded-full text-sm text-slate-800 dark:text-slate-200 font-semibold placeholder-slate-400 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus-visible:ring-2 focus-visible:ring-blue-500/40 transition-all duration-200">
+          <div class="absolute inset-y-0 left-5 flex items-center pointer-events-none text-slate-400 dark:text-slate-500 text-lg" aria-hidden="true"><span class="material-symbols-outlined">search</span></div>
+          <!-- ショートカットヒント：消えるプレースホルダーに依存せず、常設のkbd要素として表示（業界標準パターン） -->
+          <kbd id="search-kbd-hint" aria-hidden="true" class="hidden lg:flex items-center justify-center absolute right-[7.25rem] h-5 min-w-5 px-1 text-[10px] font-mono font-bold text-slate-400 dark:text-slate-500 border border-slate-300 dark:border-slate-600 rounded pointer-events-none transition-opacity duration-150">/</kbd>
+          <button id="clear-btn" onclick="clearSearch()" aria-label="検索条件をクリア" class="hidden absolute right-[6.25rem] w-7 h-7 items-center justify-center text-slate-400 dark:text-slate-400 text-lg font-medium hover:text-slate-600 dark:hover:text-slate-200 transition-all cursor-pointer">
+            <span aria-hidden="true">×</span>
+          </button>
+
+          <!-- 区切り線：検索操作(左)と、並び替え/絞り込み(右)を視覚的に分離する -->
+          <div class="absolute right-[5.25rem] top-1/2 -translate-y-1/2 h-6 w-px bg-slate-300 dark:bg-slate-600" aria-hidden="true"></div>
+
+          <!-- ソート：アイコンのみ。Notionのフィルターパネルと同じく、タップでボトムシートを開く -->
+          <button onclick="openSheet('sort')" id="sort-btn" aria-haspopup="dialog" aria-expanded="false" aria-label="並び替え" title="並び替え"
+            class="absolute right-11 w-9 h-9 flex items-center justify-center text-slate-500 dark:text-slate-400 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all cursor-pointer">
+            <span class="material-symbols-outlined text-xl" aria-hidden="true">swap_vert</span>
+          </button>
+
+          <!-- フィルター：アイコンのみ。適用中の件数をバッジで表示 -->
+          <button onclick="openSheet('filter')" id="filter-btn" aria-haspopup="dialog" aria-expanded="false" aria-label="絞り込みフィルター" title="絞り込みフィルター"
+            class="absolute right-1.5 w-9 h-9 flex items-center justify-center text-slate-500 dark:text-slate-400 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all cursor-pointer">
+            <span class="material-symbols-outlined text-xl" aria-hidden="true">tune</span>
+            <span id="filter-badge" class="hidden absolute top-0.5 right-0.5 bg-blue-500 text-white text-[9px] font-bold w-3.5 h-3.5 items-center justify-center rounded-full" aria-hidden="true">0</span>
+          </button>
+        </div>
+
+        <!-- 適用中の条件は常に見える場所に残す（可視性の原則：操作パネルは隠してよいが、結果の状態は隠さない） -->
+        <div id="active-filter-tags" class="hidden flex-wrap gap-1.5 items-center" role="status" aria-label="適用中のフィルター"></div>
+      </search>
+
+      <!-- ソート・フィルターのボトムシート（Notionの選択パネルを参考にした構成） -->
+      <div id="sheet-backdrop" onclick="closeSheet()" class="hidden fixed inset-0 bg-black/40 z-40 opacity-0 transition-opacity duration-200"></div>
+
+      <div id="sort-sheet" role="dialog" aria-modal="true" aria-labelledby="sort-sheet-title"
+        class="hidden fixed inset-x-0 bottom-0 z-50 bg-white dark:bg-[#1e1f20] rounded-t-[24px] p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-2xl translate-y-full transition-transform duration-250 max-w-lg mx-auto">
+        <div class="w-9 h-1 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto mb-4" aria-hidden="true"></div>
+        <h2 id="sort-sheet-title" class="text-sm font-bold text-slate-900 dark:text-slate-100 px-1 mb-3">並び替え</h2>
+        <div id="sort-options" class="flex flex-col gap-1"></div>
       </div>
 
-      <!-- コントロールパネル -->
-      <div class="bg-white dark:bg-[#1e1f20] p-4 md:p-5 rounded-[24px] flex flex-col gap-3 transition-all duration-300 sticky top-2 md:top-4 z-30 shadow-md border border-slate-200/20 dark:border-white/5">
+      <div id="filter-sheet" role="dialog" aria-modal="true" aria-labelledby="filter-sheet-title"
+        class="hidden fixed inset-x-0 bottom-0 z-50 bg-white dark:bg-[#1e1f20] rounded-t-[24px] p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-2xl translate-y-full transition-transform duration-250 max-w-lg mx-auto max-h-[80vh] overflow-y-auto overflow-x-hidden">
+        <div class="w-9 h-1 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto mb-4" aria-hidden="true"></div>
+        <h2 id="filter-sheet-title" class="text-sm font-bold text-slate-900 dark:text-slate-100 px-1 mb-4">絞り込み</h2>
 
-        <div class="flex flex-col md:flex-row gap-3 h-auto md:h-12">
-          <!-- 検索バー -->
-          <div class="relative flex items-center flex-1 h-12">
-            <input type="text" id="search-input" oninput="toggleClearButton()" onkeydown="if(event.key === 'Enter') executeSearch()" placeholder="資産名、型番、用途で検索... ( / キーでフォーカス )"
-              class="w-full h-full pl-12 pr-12 bg-[#f8f9fa] dark:bg-[#282a2c] border-none rounded-full text-sm text-slate-800 dark:text-slate-200 font-semibold placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus-visible:ring-2 focus-visible:ring-blue-500/40 transition-all duration-200">
-            <div class="absolute inset-y-0 left-5 flex items-center pointer-events-none text-slate-400 dark:text-slate-500 text-sm">🔍</div>
-            <button id="clear-btn" onclick="clearSearch()" class="hidden absolute right-1.5 w-9 h-9 items-center justify-center text-slate-400 dark:text-slate-400 text-lg font-medium hover:text-slate-600 dark:hover:text-slate-200 transition-all cursor-pointer">
-              ×
-            </button>
-          </div>
+        <fieldset class="flex flex-col gap-2 border-none p-0 m-0 mb-4 min-w-0">
+          <legend class="flex items-center gap-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider ml-1 p-0"><span class="material-symbols-outlined text-sm" aria-hidden="true">home_pin</span>ロケーション</legend>
+          <div id="location-chips" class="flex flex-wrap gap-1.5 py-0.5 min-w-0"></div>
+        </fieldset>
+        <fieldset class="flex flex-col gap-2 border-none p-0 m-0 mb-4 min-w-0">
+          <legend class="flex items-center gap-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider ml-1 p-0"><span class="material-symbols-outlined text-sm" aria-hidden="true">sell</span>カテゴリ</legend>
+          <div id="category-chips" class="flex flex-wrap gap-1.5 py-0.5 min-w-0"></div>
+        </fieldset>
 
-          <div class="grid grid-cols-2 md:flex gap-3 h-12 shrink-0 w-full md:w-auto">
-            <select id="sort-select" onchange="executeSort()" title="並び替え" class="col-span-1 px-5 bg-[#f8f9fa] dark:bg-[#282a2c] border-none rounded-full text-xs font-bold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus-visible:ring-2 focus-visible:ring-blue-500/40 cursor-pointer h-full w-full md:w-48">
-              <option value="name_asc" selected>名前順 (あ-ん)</option>
-              <option value="maker_asc">メーカー順</option>
-              <option value="date_desc">購入日が新しい順</option>
-              <option value="date_asc">購入日が古い順</option>
-              <option value="default">システム登録順</option>
-            </select>
-
-            <button onclick="toggleFilters()" id="filter-btn" class="col-span-1 px-5 bg-[#f8f9fa] dark:bg-[#282a2c] text-slate-700 dark:text-slate-200 rounded-full text-xs font-bold hover:brightness-95 dark:hover:brightness-110 transition-all border-none h-full flex items-center justify-center gap-2 w-full md:w-40 cursor-pointer">
-              <span class="hidden md:inline">詳細フィルター</span>
-              <span class="inline md:hidden">フィルター</span>
-              <span id="filter-badge" class="hidden bg-blue-500 text-white text-[10px] font-bold w-4 h-4 items-center justify-center rounded-full">0</span>
-              <span id="filter-icon" class="text-[10px]">▼</span>
-            </button>
-          </div>
+        <div class="flex items-center gap-2 pt-3 border-t border-slate-200/50 dark:border-white/5">
+          <label class="inline-flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700 dark:text-slate-300 select-none py-2 px-1">
+            <input type="checkbox" id="show-disposed-check" onchange="toggleDisposed()" class="w-4 h-4 rounded-sm border-slate-300 dark:border-slate-600 text-blue-500 focus:ring-blue-500/40">
+            <span class="flex items-center gap-1"><span class="material-symbols-outlined text-base" aria-hidden="true">recycling</span>廃棄・処分済みの資産も含めて表示する</span>
+          </label>
         </div>
 
-        <div id="active-filter-tags" class="hidden flex-wrap gap-1.5 items-center"></div>
+        <button onclick="closeSheet()" class="w-full mt-4 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-full text-sm font-bold cursor-pointer">
+          閉じる
+        </button>
+      </div>
 
-        <div id="filter-container" class="hidden flex-col gap-4 pt-4 mt-2 border-t border-slate-200/50 dark:border-white/5">
-          <div class="flex flex-col gap-2">
-            <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider ml-1">🏠 ロケーション</span>
-            <div id="location-chips" class="flex flex-nowrap md:flex-wrap gap-1.5 overflow-x-auto md:overflow-visible no-scrollbar py-0.5"></div>
-          </div>
-          <div class="flex flex-col gap-2">
-            <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider ml-1">🏷️ カテゴリ</span>
-            <div id="category-chips" class="flex flex-nowrap md:flex-wrap gap-1.5 overflow-x-auto md:overflow-visible no-scrollbar py-0.5"></div>
-          </div>
-          
-          <div class="flex items-center gap-2 pt-2 border-t border-slate-200/50 dark:border-white/5">
-            <label class="inline-flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700 dark:text-slate-300 select-none py-2 px-1">
-              <input type="checkbox" id="show-disposed-check" onchange="toggleDisposed()" class="w-4 h-4 rounded-sm border-slate-300 dark:border-slate-600 text-blue-500 focus:ring-blue-500/40">
-              <span>♻️ 廃棄・処分済みの資産も含めて表示する</span>
-            </label>
-          </div>
-        </div>
+      <!-- スキャン実行シート：旧Index.html(独立ページ)の機能をボトムシートに統合したもの。
+           管理者のみがアクセスできる導線(画面下部中央のFAB、add-asset-link)からのみ開く。
+           内容は「AIモデル選択」「スキャン実行ボタン」「実行結果レポート」の3点のみで、
+           独立ページとして持つ必要のあるボリュームではないため、この形に統合した。 -->
+      <div id="scan-sheet" role="dialog" aria-modal="true" aria-labelledby="scan-sheet-title"
+        class="hidden fixed inset-x-0 bottom-0 z-50 bg-white dark:bg-[#1e1f20] rounded-t-[24px] p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-2xl translate-y-full transition-transform duration-250 max-w-lg mx-auto max-h-[85vh] overflow-y-auto overflow-x-hidden">
+        <div class="w-9 h-1 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto mb-4" aria-hidden="true"></div>
+        <h2 id="scan-sheet-title" class="text-sm font-bold text-slate-900 dark:text-slate-100 px-1 mb-1">家電を登録する</h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400 px-1 mb-4">INBOXフォルダに投入済みの書類を、Geminiが解析して台帳に登録します。</p>
+
+        <fieldset class="flex flex-col gap-2 border-none p-0 m-0 mb-4">
+          <legend class="flex items-center gap-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider ml-1 p-0"><span class="material-symbols-outlined text-sm" aria-hidden="true">smart_toy</span>使用するAIモデル</legend>
+          <select id="scan-model-select" class="w-full px-4 py-3 bg-[#f8f9fa] dark:bg-[#282a2c] border-none rounded-xl text-sm font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/40 cursor-pointer">
+            <option value="">読み込み中...</option>
+          </select>
+        </fieldset>
+
+        <!-- 実行結果レポート：スキャン完了後にここへ件数・警告を差し込む。既定は非表示 -->
+        <div id="scan-result-report" class="hidden mb-4 p-4 bg-[#f8f9fa] dark:bg-[#282a2c] rounded-xl text-xs text-slate-700 dark:text-slate-300 space-y-1" role="status" aria-live="polite"></div>
+
+        <button id="scan-execute-btn" onclick="executeScan()"
+          class="w-full py-3.5 bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white rounded-full text-sm font-bold shadow-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-wait flex items-center justify-center gap-2">
+          <span class="material-symbols-outlined text-lg" aria-hidden="true">radar</span>
+          <span id="scan-execute-label">スキャン実行</span>
+        </button>
+
+        <button onclick="closeSheet()" class="w-full mt-2 py-3 text-slate-500 dark:text-slate-400 rounded-full text-sm font-bold cursor-pointer">
+          閉じる
+        </button>
+      </div>
+
+      <!-- 資産の詳細シート：一覧カードをタップすると開く。
+           一覧は「探す」ための情報だけに絞り、「見つけた後に使う情報」
+           (ID・拠点・購入日・書類ボタン)はすべてここに集約する。
+           書類ボタンを縦に並べられるため、横スクロール・フェード・件数バッジといった
+           一覧側で必要だった補助表示が、構造的に不要になる。 -->
+      <div id="detail-sheet" role="dialog" aria-modal="true" aria-labelledby="detail-sheet-title"
+        class="hidden fixed inset-x-0 bottom-0 z-50 bg-white dark:bg-[#1e1f20] rounded-t-[24px] p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-2xl translate-y-full transition-transform duration-250 max-w-lg mx-auto max-h-[85vh] overflow-y-auto overflow-x-hidden">
+        <div class="w-9 h-1 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto mb-4" aria-hidden="true"></div>
+        <div id="detail-sheet-content"></div>
+        <button onclick="closeSheet()" class="w-full mt-4 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-full text-sm font-bold cursor-pointer">
+          閉じる
+        </button>
       </div>
 
       <!-- AI検索結果バナー -->
-      <div id="ai-result-banner" class="hidden items-center justify-between gap-3 bg-blue-50/80 dark:bg-blue-900/20 rounded-[24px] px-5 py-4">
-        <span class="text-xs font-bold text-blue-700 dark:text-blue-300">✨ AI拡張検索の結果を表示中</span>
+      <div id="ai-result-banner" class="hidden items-center justify-between gap-3 bg-blue-50/80 dark:bg-blue-900/20 rounded-[24px] px-5 py-4" role="status">
+        <span class="flex items-center gap-1.5 text-xs font-bold text-blue-700 dark:text-blue-300"><span class="material-symbols-outlined text-base" aria-hidden="true">auto_awesome</span>AI拡張検索の結果を表示中</span>
         <button onclick="clearSearch()" class="text-xs font-bold text-blue-600 dark:text-blue-400 bg-white dark:bg-blue-900/40 px-4 py-2 rounded-full hover:brightness-95 dark:hover:brightness-125 transition-all shrink-0">
           すべて表示に戻す
         </button>
       </div>
 
       <!-- 真の流動可変グリッド -->
-      <div id="asset-list" class="grid grid-cols-[repeat(auto-fill,minmax(400px,1fr))] gap-3 w-full">
+      <main id="asset-list" class="grid grid-cols-[repeat(auto-fill,minmax(min(400px,100%),1fr))] gap-3 w-full" aria-label="資産一覧" aria-live="polite" aria-busy="true">
         <div class="col-span-full bg-white dark:bg-[#1e1f20] p-6 rounded-[24px] text-center text-xs text-slate-400 dark:text-slate-500 animate-pulse">
           台帳ソースを同期中...
         </div>
-      </div>
+      </main>
     </div>
 
+    <!-- 登録用フローティングボタン(FAB)：管理者のみ表示。左下に常時配置する。
+         右下の「トップに戻る」ボタンとサイズ・色調(白/濃色ベース)・縁取りを完全に揃え、
+         左右対称の同系統UI部品として統一する。
+         既定は非表示にしておき、権限確認が取れてから表示を切り替える(チラつき防止)。 -->
+    <button id="add-asset-link" onclick="openSheet('scan')" aria-haspopup="dialog" aria-expanded="false" aria-label="家電を登録する" title="家電を登録する"
+      class="hidden fixed bottom-6 left-6 z-50 w-11 h-11 bg-white dark:bg-[#1e1f20] text-slate-700 dark:text-slate-200 rounded-full shadow-lg border border-slate-200/50 dark:border-white/5 items-center justify-center transition-all duration-300 cursor-pointer active:scale-90">
+      <span class="material-symbols-outlined text-lg" aria-hidden="true">add</span>
+    </button>
+
     <!-- トップ戻りボタン -->
-    <button id="to-top-btn" onclick="backToTop()" title="トップに戻る" 
+    <button id="to-top-btn" onclick="backToTop()" title="トップに戻る" aria-label="トップに戻る"
       class="fixed bottom-6 right-6 z-50 w-11 h-11 bg-white dark:bg-[#1e1f20] text-slate-700 dark:text-slate-200 rounded-full shadow-lg border border-slate-200/50 dark:border-white/5 flex items-center justify-center text-sm font-bold opacity-0 translate-y-4 pointer-events-none transition-all duration-300 cursor-pointer group active:scale-90">
-      <span class="md:group-hover:-translate-y-0.5 transition-transform">▲</span>
+      <span class="md:group-hover:-translate-y-0.5 transition-transform" aria-hidden="true">▲</span>
     </button>
 
     <script>
       // ==========================================
       // 1. 定数と状態管理 (State & Constants)
       // ==========================================
+      // ★変更：絵文字(OS依存でトーン&マナーが崩れる)からMaterial Symbolsのアイコン名に統一
       const FILE_TYPES = {
-        'MNL': { full: '📄 取扱説明書', color: 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300' },
-        'RCP': { full: '🧾 領収書',   color: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' },
-        'WRT': { full: '🛡️ 保証書',   color: 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300' },
-        'OTH': { full: '📁 その他',   color: 'bg-slate-100 text-slate-700 dark:bg-slate-800/60 dark:text-slate-300' }
+        'MNL': { icon: 'description',  label: '取扱説明書', color: 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300' },
+        'RCP': { icon: 'receipt_long', label: '領収書',   color: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' },
+        'WRT': { icon: 'verified_user',label: '保証書',   color: 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300' },
+        'OTH': { icon: 'article',      label: 'その他',   color: 'bg-slate-100 text-slate-700 dark:bg-slate-800/60 dark:text-slate-300' }
       };
 
       const DISPLAY_STEP = 20;
+
+      // ★変更：<select>によるソート選択をボトムシート方式に変更したため、
+      //   選択肢の定義をJS側の単一の配列にまとめる(通常時とAI検索結果時で出し分ける)。
+      const SORT_OPTIONS_DEFAULT = [
+        { value: 'name_asc',   label: '名前順 (あ-ん)' },
+        { value: 'maker_asc',  label: 'メーカー順' },
+        { value: 'date_desc',  label: '購入日が新しい順' },
+        { value: 'date_asc',   label: '購入日が古い順' },
+        { value: 'default',    label: 'システム登録順' },
+      ];
+      const SORT_OPTIONS_AI = [
+        { value: 'ai_score',   label: '✨ AIおすすめ順' },
+        ...SORT_OPTIONS_DEFAULT,
+      ];
 
       let allAssets = [];
       let currentAssets = [];
@@ -181,6 +315,8 @@
       let activeCategoryName = ''; 
       let showDisposed = false; 
       let isAiResult = false;
+      let currentSortType = 'name_asc'; // ★追加：<select>の代わりにJS変数でソート状態を保持
+      let isAdmin = false; // ★追加：シートを閉じた際にadd-asset-linkの表示を正しく復元するため保持
 
       const utils = {
         cleanUrl(rawUrl) {
@@ -206,6 +342,13 @@
         },
         getCardColor() {
           return 'bg-white dark:bg-[#1e1f20]'; 
+        },
+
+        // ★共通化：稼働/除外の判定ロジックを1箇所に集約（applyFiltersAndRenderとrenderListで
+        //   重複していたものを解消）
+        isAssetActive(asset) {
+          const val = asset.status ? String(asset.status).trim().toLowerCase() : '';
+          return (val === '' || val === 'active' || val === '正常');
         },
         
         // 検索語と台帳データの双方に適用する正規化処理。表記ゆれ（全角/半角・ひらがな/カタカナ・
@@ -254,9 +397,15 @@
           console.log("ローカルプレビュー環境: モックデータを読み込みます");
           const mockData = [
             { id: "H01ACC001", name: "BALMUDA GreenFan C2", maker: "バルミューダ", model: "A02A-WK", cat: "APL", catName: "家電", loc: "LIV", locName: "リビング", purchaseDate: "2024-05-10", status: "active", files: [{ type: "MNL", url: "https://example.com" }] },
-            { id: "H01ACC002", name: "Jabra Engage 65 Mono", maker: "Jabra", model: "WHB013BS", cat: "PC", catName: "ガジェット", loc: "STU", locName: "書斎", purchaseDate: "2023-11-01", status: "active", files: [{ type: "MNL", url: "https://example.com" }, { type: "RCP", url: "https://example.com" }] }
+            { id: "H01ACC002", name: "Jabra Engage 65 Mono", maker: "Jabra", model: "WHB013BS", cat: "PC", catName: "ガジェット", loc: "STU", locName: "書斎", purchaseDate: "2023-11-01", status: "active", files: [{ type: "MNL", url: "https://example.com" }, { type: "RCP", url: "https://example.com" }] },
+            { id: "H01LIT002", name: "LEDシーリングライト", maker: "Hotalux", model: "HLDC08433SG", cat: "LIT", catName: "照明", loc: "LIV", locName: "自宅", purchaseDate: "2025-11-22", status: "active", files: [{ type: "MNL", url: "https://example.com" }, { type: "RCP", url: "https://example.com" }, { type: "OTH", url: "https://example.com" }] },
+            { id: "H01EMG001", name: "LED懐中電灯", maker: "Panasonic", model: "BF-BM11M-W", cat: "EMG", catName: "防災・防犯", loc: "LIV", locName: "自宅", purchaseDate: "", status: "disposed", files: [{ type: "MNL", url: "https://example.com" }] }
           ];
-          allAssets = mockData; currentAssets = mockData; initUI(); return;
+          allAssets = mockData; currentAssets = mockData; initUI();
+          // ローカルプレビューでは見た目を確認できるよう、登録アイコンを常時表示しておく
+          isAdmin = true;
+          document.getElementById('add-asset-link').classList.replace('hidden', 'flex');
+          return;
         }
 
         google.script.run
@@ -273,12 +422,50 @@
             document.getElementById('asset-list').innerHTML = `<div class="col-span-full p-6 text-center text-sm text-rose-500 bg-rose-50 dark:bg-rose-950/20 rounded-[24px]">読み込みに失敗しました: ${err.message}</div>`;
           })
           .getAssetStorageData("");
+
+        // 登録アイコンの表示可否：資産データ取得とは独立させ、
+        // 権限確認が遅れても/失敗してもデータ一覧の表示は妨げない設計にする。
+        // 既定でhiddenのまま(前述)なので、失敗時は「表示されない」という安全側に倒れる。
+        google.script.run
+          .withSuccessHandler((role) => {
+            if (role === 'admin') {
+              isAdmin = true;
+              document.getElementById('add-asset-link').classList.replace('hidden', 'flex');
+            }
+          })
+          .withFailureHandler((err) => {
+            console.warn('権限確認に失敗しました。登録アイコンは表示されません。', err);
+          })
+          .getCurrentUserRole();
       };
 
       function initUI() {
         buildChips('location-chips', 'loc', 'locName', (code, name) => { activeLocation = code; activeLocationName = name; });
         buildChips('category-chips', 'cat', 'catName', (code, name) => { activeCategory = code; activeCategoryName = name; });
+        renderSortOptions(SORT_OPTIONS_DEFAULT);
         applyFiltersAndRender();
+      }
+
+      // ★追加：ソートのボトムシートの中身を、選択肢配列から描画する(選択済みはチェックマークで示す)
+      function renderSortOptions(options) {
+        const container = document.getElementById('sort-options');
+        container.innerHTML = options.map(opt => `
+          <button type="button" onclick="selectSort('${opt.value}')" aria-pressed="${opt.value === currentSortType}"
+            class="flex items-center justify-between text-left px-3 py-3 rounded-xl text-sm font-bold transition-colors cursor-pointer
+              ${opt.value === currentSortType
+                ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300'
+                : 'text-slate-700 dark:text-slate-200 hover:bg-[#f8f9fa] dark:hover:bg-[#282a2c]'}">
+            <span>${opt.label}</span>
+            ${opt.value === currentSortType ? '<span class="material-symbols-outlined text-lg" aria-hidden="true">check</span>' : ''}
+          </button>
+        `).join('');
+      }
+
+      window.selectSort = function(value) {
+        currentSortType = value;
+        renderSortOptions(isAiResult ? SORT_OPTIONS_AI : SORT_OPTIONS_DEFAULT);
+        applyFiltersAndRender();
+        closeSheet();
       }
 
       // ==========================================
@@ -318,15 +505,20 @@
         const items = [{ code: 'ALL', name: 'すべて' }, ...normalItems, ...otherItems];
 
         items.forEach(item => {
-          const chip = document.createElement('div');
+          // ★変更：divからbuttonへ。クリックのみだったチップをキーボード操作(Tab/Enter/Space)
+          //   可能にし、選択状態をaria-pressedで支援技術に伝える。
+          const chip = document.createElement('button');
+          chip.type = 'button';
           const isActive = item.code === 'ALL';
           chip.className = getChipClass(isActive);
           chip.innerText = item.name || '未分類';
           chip.dataset.code = item.code;
+          chip.setAttribute('aria-pressed', String(isActive));
 
           chip.onclick = function() {
-            container.querySelectorAll('div').forEach(c => c.className = getChipClass(false));
+            container.querySelectorAll('button').forEach(c => { c.className = getChipClass(false); c.setAttribute('aria-pressed', 'false'); });
             this.className = getChipClass(true);
+            this.setAttribute('aria-pressed', 'true');
             stateUpdater(item.code, item.name || '未分類');
             applyFiltersAndRender();
           };
@@ -342,14 +534,189 @@
           : 'bg-[#f8f9fa] dark:bg-[#282a2c] hover:brightness-95 dark:hover:brightness-110 text-slate-700 dark:text-slate-200');
       }
 
-      function toggleFilters() {
-        const container = document.getElementById('filter-container');
-        const icon = document.getElementById('filter-icon');
-        const isHidden = container.classList.contains('hidden');
+      // ★変更：詳細フィルターの展開/折りたたみ(toggleFilters)を廃止し、
+      //   ソート・フィルターをそれぞれ独立したボトムシートとして開閉する方式に統一(Notion方式)。
+      let activeSheetId = null;
 
-        container.classList.toggle('hidden', !isHidden);
-        container.classList.toggle('flex', isHidden);
-        icon.innerText = isHidden ? '▲' : '▼';
+      // ★変更：sort/filterの2択ハードコードだったkind判定を、マップ方式に変更。
+      //   新しい種類のシート(scan等)を追加する際、三項演算子の分岐を増やさずに済む。
+      const SHEET_CONFIG = {
+        sort:   { sheetId: 'sort-sheet',   btnId: 'sort-btn' },
+        filter: { sheetId: 'filter-sheet', btnId: 'filter-btn' },
+        scan:   { sheetId: 'scan-sheet',   btnId: 'add-asset-link' },
+        // 詳細シートは固定のトリガーボタンを持たない(各カード自体がトリガーになる)ため btnId は null
+        detail: { sheetId: 'detail-sheet', btnId: null },
+      };
+
+      window.openSheet = function(kind) {
+        const { sheetId, btnId } = SHEET_CONFIG[kind];
+        const sheet = document.getElementById(sheetId);
+        const backdrop = document.getElementById('sheet-backdrop');
+        const triggerBtn = document.getElementById(btnId);
+
+        backdrop.classList.remove('hidden');
+        // 1フレーム後にtransitionを効かせるため、rAFでopacity切り替えを遅延させる
+        requestAnimationFrame(() => backdrop.classList.add('opacity-100'));
+
+        sheet.classList.remove('hidden');
+        requestAnimationFrame(() => sheet.classList.remove('translate-y-full'));
+
+        // 詳細シートのようにトリガーボタンを持たないシートもあるため、存在チェックを挟む
+        if (triggerBtn) triggerBtn.setAttribute('aria-expanded', 'true');
+        activeSheetId = sheetId;
+
+        // ★追加：シート表示中は、背後の2つのFAB(登録・トップに戻る)を隠す。
+        //   隠さないと、シートより手前にタップ可能なまま残り、
+        //   モーダルとしての没入感が壊れる/誤操作でシートが多重に開こうとする問題があった。
+        const addBtn = document.getElementById('add-asset-link');
+        const topBtn = document.getElementById('to-top-btn');
+        if (addBtn && !addBtn.classList.contains('hidden')) addBtn.classList.replace('flex', 'hidden');
+        if (topBtn) topBtn.classList.add('pointer-events-none', '!opacity-0');
+
+        // ★追加：背景のスクロールをロックする(標準的なモーダルの作法)。
+        //   ロックしないと、シートの裏で背景がスクロールでき、
+        //   scrollイベントリスナーが発火して pointer-events-none が
+        //   勝手に解除される(=見た目は隠れているのに裏で押せてしまう)
+        //   アクセシビリティ上の問題が起きるため。
+        document.body.style.overflow = 'hidden';
+
+        // scanシートは開いた瞬間にモデル一覧を遅延読み込みする(常時ロードしない)。
+        // 管理者以外はこのボタン自体が表示されないため、余計なgoogle.script.run呼び出しを避けられる。
+        if (kind === 'scan') loadScanModelOptions();
+
+        // フォーカスをシート内に移す(モーダルとしての基本挙動)
+        const firstFocusable = sheet.querySelector('button, input, [tabindex]');
+        if (firstFocusable) firstFocusable.focus();
+      }
+
+      window.closeSheet = function() {
+        if (!activeSheetId) return;
+        const sheet = document.getElementById(activeSheetId);
+        const backdrop = document.getElementById('sheet-backdrop');
+        const kind = Object.keys(SHEET_CONFIG).find(k => SHEET_CONFIG[k].sheetId === activeSheetId);
+        const triggerBtn = document.getElementById(SHEET_CONFIG[kind].btnId);
+
+        sheet.classList.add('translate-y-full');
+        backdrop.classList.remove('opacity-100');
+        if (triggerBtn) triggerBtn.setAttribute('aria-expanded', 'false');
+
+        // ★追加：シートを閉じたら、隠していた2つのFABを元の状態に復元する。
+        //   登録FABは「isAdmin(実際の権限)」を見て復元する(無条件に表示すると、
+        //   閲覧者でも一度シートを開閉しただけでボタンが出現してしまう事故を防ぐ)。
+        //   トップに戻るボタンは、pointer-events/opacityの上書きを外すだけで、
+        //   スクロール位置に応じた本来の表示制御(window.addEventListener('scroll',...))に任せる。
+        if (isAdmin) {
+          document.getElementById('add-asset-link').classList.replace('hidden', 'flex');
+        }
+        document.getElementById('to-top-btn').classList.remove('pointer-events-none', '!opacity-0');
+        document.body.style.overflow = '';
+
+        // transition完了後に非表示化(アニメーション途中で消えないように)
+        setTimeout(() => {
+          sheet.classList.add('hidden');
+          backdrop.classList.add('hidden');
+        }, 250);
+
+        activeSheetId = null;
+      }
+
+      // ★追加：旧Index.htmlが持っていた「モデル一覧取得」「スキャン実行」ロジックを移植。
+      //   バックエンドの getModelSettings() / runScanFromUI() をそのまま流用する
+      //   (ロジック自体は変更せず、呼び出し元をボトムシートに変えただけ)。
+
+      let scanModelOptionsLoaded = false;
+
+      function loadScanModelOptions() {
+        // 一度読み込んだら再取得しない(シートを何度開いても毎回叩かない)
+        if (scanModelOptionsLoaded) return;
+
+        const select = document.getElementById('scan-model-select');
+
+        if (typeof google === 'undefined' || !google.script) {
+          // ローカルプレビュー環境用のダミー選択肢
+          select.innerHTML = `
+            <option value="gemini-2.5-flash" selected>gemini-2.5-flash (プレビュー)</option>
+            <option value="gemini-2.5-pro">gemini-2.5-pro (プレビュー)</option>
+          `;
+          scanModelOptionsLoaded = true;
+          return;
+        }
+
+        google.script.run
+          .withSuccessHandler((settings) => {
+            // settings = { currentModel: string, models: string[] } を想定
+            // (getModelSettings()の既存レスポンス形式に合わせる)
+            select.innerHTML = (settings.models || []).map(m =>
+              `<option value="${m}" ${m === settings.currentModel ? 'selected' : ''}>${m}</option>`
+            ).join('');
+            scanModelOptionsLoaded = true;
+          })
+          .withFailureHandler((err) => {
+            select.innerHTML = `<option value="">読み込みに失敗しました</option>`;
+            console.error('モデル一覧の取得に失敗しました', err);
+          })
+          .getModelSettings();
+      }
+
+      window.executeScan = function() {
+        const btn = document.getElementById('scan-execute-btn');
+        const label = document.getElementById('scan-execute-label');
+        const report = document.getElementById('scan-result-report');
+        const selectedModel = document.getElementById('scan-model-select').value;
+
+        btn.disabled = true;
+        label.textContent = '解析中...';
+        report.classList.add('hidden');
+
+        if (typeof google === 'undefined' || !google.script) {
+          // ローカルプレビュー環境ではダミーの完了レポートを表示するだけ
+          setTimeout(() => {
+            btn.disabled = false;
+            label.textContent = 'スキャン実行';
+            report.innerHTML = `<div>プレビュー環境のため、実際のスキャンは実行されません。</div>`;
+            report.classList.remove('hidden');
+          }, 800);
+          return;
+        }
+
+        google.script.run
+          .withSuccessHandler((result) => {
+            btn.disabled = false;
+            label.textContent = 'スキャン実行';
+
+            // result.message は runScanFromUI() が既存で組み立てている
+            // 「処理完了\n新規資産登録：n件...」形式の文字列を想定
+            report.innerHTML = (result && result.message)
+              ? result.message.replace(/\n/g, '<br>')
+              : '処理が完了しました。';
+            report.classList.remove('hidden');
+
+            // 台帳が更新されたはずなので、一覧を再読み込みする
+            refreshAssetList();
+          })
+          .withFailureHandler((err) => {
+            btn.disabled = false;
+            label.textContent = 'スキャン実行';
+            report.innerHTML = `<div class="text-rose-600 dark:text-rose-400">スキャンに失敗しました: ${err.message}</div>`;
+            report.classList.remove('hidden');
+          })
+          .runScanFromUI(selectedModel);
+      }
+
+      // スキャン完了後に台帳データを再取得し、一覧表示を更新する
+      function refreshAssetList() {
+        if (typeof google === 'undefined' || !google.script) return;
+
+        google.script.run
+          .withSuccessHandler((assets) => {
+            allAssets = assets;
+            currentAssets = assets;
+            initUI();
+          })
+          .withFailureHandler((err) => {
+            console.error('一覧の再読み込みに失敗しました', err);
+          })
+          .getAssetStorageData("");
       }
 
       window.removeFilter = function(type) {
@@ -374,7 +741,7 @@
           tagContainer.innerHTML = activeFilters.map(f => `
             <span class="inline-flex items-center gap-1 bg-[#f8f9fa] dark:bg-[#282a2c] text-slate-800 dark:text-slate-200 text-[11px] font-bold pl-3 pr-1 py-1 rounded-full border border-slate-200/40 dark:border-white/5">
               ${f.label}
-              <button onclick="removeFilter('${f.type}')" class="w-7 h-7 flex items-center justify-center text-slate-400 dark:text-slate-400 text-sm hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">×</button>
+              <button onclick="removeFilter('${f.type}')" aria-label="${f.label}のフィルターを解除" class="w-7 h-7 flex items-center justify-center text-slate-400 dark:text-slate-400 text-sm hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"><span aria-hidden="true">×</span></button>
             </span>
           `).join('');
           tagContainer.classList.remove('hidden');
@@ -387,8 +754,10 @@
 
       function resetChipSelection(containerId) {
         const container = document.getElementById(containerId);
-        container.querySelectorAll('div').forEach(c => {
-          c.className = getChipClass(c.dataset.code === 'ALL');
+        container.querySelectorAll('button').forEach(c => {
+          const isActive = c.dataset.code === 'ALL';
+          c.className = getChipClass(isActive);
+          c.setAttribute('aria-pressed', String(isActive));
         });
       }
 
@@ -405,6 +774,10 @@
         const clearBtn = document.getElementById('clear-btn');
         clearBtn.classList.toggle('hidden', !hasValue);
         clearBtn.classList.toggle('flex', hasValue);
+        // 入力があるときはkbdヒントを隠す。responsiveな hidden/md:flex の表示制御と
+        // 競合しないよう、display切り替えではなくopacityで制御する。
+        const kbdHint = document.getElementById('search-kbd-hint');
+        if (kbdHint) kbdHint.style.opacity = hasValue ? '0' : '1';
       }
 
       function setSearchingState(isSearching) {
@@ -452,15 +825,9 @@
             resetFiltersForAiResult();
             isAiResult = true;
 
-            const sortSelect = document.getElementById('sort-select');
-            sortSelect.innerHTML = `
-              <option value="ai_score" selected>✨ AIおすすめ順</option>
-              <option value="name_asc">名前順 (あ-ん)</option>
-              <option value="maker_asc">メーカー順</option>
-              <option value="date_desc">購入日が新しい順</option>
-              <option value="date_asc">購入日が古い順</option>
-              <option value="default">システム登録順</option>
-            `;
+            // ★変更：<select>への直接書き込みから、状態変数の更新＋ボトムシート再描画に統一
+            currentSortType = 'ai_score';
+            renderSortOptions(SORT_OPTIONS_AI);
 
             document.getElementById('ai-result-banner').classList.replace('hidden', 'flex');
             currentAssets = results;
@@ -488,20 +855,11 @@
         isAiResult = false;
         document.getElementById('ai-result-banner').classList.replace('flex', 'hidden');
 
-        const sortSelect = document.getElementById('sort-select');
-        sortSelect.innerHTML = `
-          <option value="name_asc" selected>名前順 (あ-ん)</option>
-          <option value="maker_asc">メーカー順</option>
-          <option value="date_desc">購入日が新しい順</option>
-          <option value="date_asc">購入日が古い順</option>
-          <option value="default">システム登録順</option>
-        `;
+        // ★変更：<select>への直接書き込みから、状態変数の更新＋ボトムシート再描画に統一
+        currentSortType = 'name_asc';
+        renderSortOptions(SORT_OPTIONS_DEFAULT);
 
         currentAssets = allAssets;
-        applyFiltersAndRender();
-      }
-
-      window.executeSort = function() {
         applyFiltersAndRender();
       }
 
@@ -512,14 +870,14 @@
           const matchLoc = (activeLocation === 'ALL' || a.loc === activeLocation);
           const matchCat = (activeCategory === 'ALL' || a.cat === activeCategory);
           
-          const val = a.status ? String(a.status).trim().toLowerCase() : '';
-          const isAssetActive = (val === '' || val === 'active' || val === '正常'); 
-          const matchStatus = showDisposed ? true : isAssetActive;
+          // ★共通化：utils.isAssetActive() に統一（renderListと同じ判定ロジックを共有）
+          const matchStatus = showDisposed ? true : utils.isAssetActive(a);
           
           return matchLoc && matchCat && matchStatus;
         });
 
-        const sortType = document.getElementById('sort-select').value;
+        // ★変更：<select>から状態変数(currentSortType)を参照する方式に統一
+        const sortType = currentSortType;
         
         if (sortType !== 'ai_score') {
           filtered.sort((a, b) => {
@@ -588,17 +946,25 @@
 
         const itemsToRender = filteredAssets.slice(0, displayLimit);
 
-        let html = itemsToRender.map(a => {
-          const val = a.status ? String(a.status).trim().toLowerCase() : '';
-          const isAssetActive = (val === '' || val === 'active' || val === '正常');
+        let html = itemsToRender.map((a, idx) => {
+          // ★共通化：utils.isAssetActive() に統一（以前applyFiltersAndRenderと重複していたロジックを解消）
+          const isAssetActive = utils.isAssetActive(a);
           const opacityClass = isAssetActive ? '' : 'dark:brightness-75';
           const cardBgColor = utils.getCardColor();
 
+          // ★大変更：一覧カードから書類ボタンを撤去し、タップで詳細シートを開く方式へ。
+          //   【理由】一覧の役割は「目的のものを見つける」ことであり、
+          //   「見つけた後に使う情報」(ID・購入日・書類ボタン)を同居させたことで
+          //   ①カード内横スクロールというアンチパターン
+          //   ②彩度の高い書類ボタンが製品名より目立つ視覚的階層の逆転
+          //   ③8px間隔で並ぶボタンの誤タップ
+          //   という3つの問題が同時に発生していた。
+          //   一覧は「探す情報」だけに絞り、詳細は専用シートに分離する。
           return `
-            <div class="${cardBgColor} py-4 px-4 md:py-4.5 md:px-5 rounded-[24px] hover:brightness-95 dark:hover:brightness-110 flex flex-row items-stretch justify-between gap-4 transition-all duration-200 cursor-default shadow-xs border border-slate-200/20 dark:border-white/5 ${opacityClass}">
+            <button type="button" onclick="openDetailSheet(${idx})"
+              class="${cardBgColor} w-full text-left py-4 px-4 md:py-4.5 md:px-5 rounded-[24px] hover:brightness-95 dark:hover:brightness-110 flex flex-col gap-1 transition-all duration-200 cursor-pointer shadow-xs border border-slate-200/20 dark:border-white/5 ${opacityClass}">
               ${buildInfoHtml(a, isAssetActive)}
-              ${buildButtonsHtml(a.files, isAssetActive)}
-            </div>
+            </button>
           `;
         }).join('');
 
@@ -613,91 +979,131 @@
         }
 
         listContainer.innerHTML = html;
+        listContainer.setAttribute('aria-busy', 'false');
       }
 
       function buildInfoHtml(a, isAssetActive) {
-        const formattedDate = utils.formatDate(a.purchaseDate);
-        const purchaseDateRow = formattedDate 
-          ? `<div class="token-text-secondary text-xs font-bold">購入: ${formattedDate}</div>` 
-          : '';
-        
-        const statusBadge = isAssetActive ? '' : `<span class="ml-2 px-2 py-0.5 bg-rose-500/10 text-rose-600 dark:text-rose-400 font-bold rounded text-[10px] tracking-wide border border-rose-500/20">台帳から除外済</span>`;
         const titleTextClass = isAssetActive ? 'token-text-primary' : 'text-slate-400 dark:text-slate-500 line-through';
 
+        // 稼働ステータスのインジケーターランプ(緑=稼働中/グレー=除外済)。
+        // 色だけに依存しないようtitle属性で状態を明記する(UDの原則)。
+        const lampClass = isAssetActive
+          ? 'bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.6)]'
+          : 'bg-slate-400 dark:bg-slate-600';
+        const lampTitle = isAssetActive ? '稼働中' : '台帳から除外済';
+
+        // ★大変更：一覧カードは「探すための情報」だけに絞る。
+        //   ID・拠点・購入日・書類ボタンは詳細シート(openDetailSheet)へ移動した。
+        //   これにより製品名が視覚的に最も強い要素になり、本来あるべき階層になる。
         return `
-          <div class="flex flex-col flex-1 min-w-0 h-full justify-between">
-            
-            <!-- 上段：タグエリア -->
-            <div class="flex items-center gap-2 flex-wrap shrink-0">
-              <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-black/5 dark:bg-white/10 text-slate-800 dark:text-slate-200 tracking-wider">${a.catName || a.cat || '未分類'}</span>
-              <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-black/5 dark:bg-white/10 text-slate-800 dark:text-slate-200 tracking-wider">${a.locName || a.loc || '未定'}</span>
-            </div>
+          <div class="flex items-center gap-2 min-w-0 mb-1.5">
+            <span class="w-2.5 h-2.5 rounded-full shrink-0 ${lampClass}" title="${lampTitle}"></span>
+            <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-black/5 dark:bg-white/10 text-slate-800 dark:text-slate-200 tracking-wider">${a.catName || a.cat || '未分類'}</span>
+          </div>
 
-            <!-- 中段：製品名 -->
-            <div class="flex-1 flex items-center min-w-0 py-2">
-              <h2 class="text-base md:text-lg font-black ${titleTextClass} truncate pr-2 tracking-tight token-mb-loose">${a.name || '名称未設定'}</h2>
-            </div>
+          <h2 class="text-base md:text-lg font-black ${titleTextClass} truncate tracking-tight mb-1">${a.name || '名称未設定'}</h2>
 
-            <!-- 下段：詳細情報 -->
-            <div class="flex flex-col token-gap-tight shrink-0 token-text-secondary">
-              <!-- メーカー・型番 -->
-              <div class="flex items-center min-w-0 text-sm font-bold">
-                <span class="truncate tracking-tight">${a.maker || 'Unknown'}</span>
-                <span class="text-slate-300 dark:text-slate-600 mx-1.5 shrink-0">|</span>
-                <span class="font-mono tracking-tight truncate font-bold">${a.model || 'N/A'}</span>
-              </div>
-              
-              <!-- 購入日 -->
-              ${purchaseDateRow}
-              
-              <!-- ID -->
-              <div class="font-mono text-[11px] token-text-tertiary flex items-center flex-wrap font-bold">
-                ID: <span class="font-black ml-1">${a.id || 'N/A'}</span>${statusBadge}
-              </div>
-            </div>
-
+          <div class="flex items-center min-w-0 text-sm font-bold token-text-secondary">
+            <span class="truncate tracking-tight">${a.maker || 'Unknown'}</span>
+            <span class="text-slate-300 dark:text-slate-600 mx-1.5 shrink-0">|</span>
+            <span class="font-mono tracking-tight truncate font-bold">${a.model || 'N/A'}</span>
           </div>
         `;
       }
 
+      // ★大変更：横スクロール(overflow-x-auto)+フェード+件数バッジ+実測ロジックを全廃し、
+      //   詳細シート内で縦に全件並べる方式へ。シート内は縦方向に余裕があるため、
+      //   「見切れているか実測して補助表示を出す」という一連の複雑さが構造的に不要になった。
+      //   (補助表示を足さないと成立しないUIは、そもそも設計が間違っている、という指摘への対応)
       function buildButtonsHtml(files, isAssetActive) {
-        let html = '<div class="flex flex-col items-end gap-1.5 shrink-0 ml-auto w-[115px] pt-0.5">';
         if (!files || files.length === 0) {
-          return html + `<span class="shrink-0 w-full text-[11px] font-bold text-slate-400 dark:text-slate-500 px-2 italic whitespace-nowrap text-right pt-2.5">書類未登録</span></div>`;
+          return `<div class="text-xs font-bold text-slate-400 dark:text-slate-500 italic py-2">書類は登録されていません</div>`;
         }
 
         const counts = {};
-        files.forEach(f => {
+        return files.map(f => {
           counts[f.type] = (counts[f.type] || 0) + 1;
           const suffix = counts[f.type] > 1 ? counts[f.type] : '';
           const typeDef = FILE_TYPES[f.type] || FILE_TYPES['OTH'];
 
           const targetUrl = utils.cleanUrl(f.url);
           const isWebMnl = (f.type === 'MNL' && targetUrl.startsWith('http') && !targetUrl.includes('drive.google.com'));
-          const displayText = isWebMnl ? `🌐 取説(Web)${suffix}` : `${typeDef.full}${suffix}`;
+          const iconName = isWebMnl ? 'language' : typeDef.icon;
+          const labelText = isWebMnl ? `取扱説明書(Web)${suffix}` : `${typeDef.label}${suffix}`;
 
-          const baseClass = `shrink-0 w-full h-11 px-2.5 text-[11px] font-black rounded-xl text-center flex items-center justify-center whitespace-nowrap transition-all shadow-xs border border-slate-200/10 dark:border-white/5 `;
-          
-          html += isAssetActive 
-            ? `<a href="${targetUrl}" target="_blank" class="${baseClass} ${typeDef.color} hover:brightness-95 active:bg-slate-950 active:text-white dark:active:bg-white dark:active:text-slate-950"><span>${displayText}</span></a>`
-            : `<div class="${baseClass} bg-black/5 dark:bg-white/5 text-slate-400 dark:text-slate-600 pointer-events-none line-through" title="除外済のため閲覧できません"><span>${displayText}</span></div>`;
-        });
+          // 縦並びなので幅は100%、高さも十分に取れる(タップ誤爆のリスクが構造的に消える)
+          const baseClass = `w-full h-12 px-4 text-sm font-bold rounded-xl flex items-center gap-2 transition-all border border-slate-200/10 dark:border-white/5 `;
+          const iconHtml = `<span class="material-symbols-outlined text-lg" aria-hidden="true">${iconName}</span>`;
 
-        return html + '</div>';
+          return isAssetActive
+            ? `<a href="${targetUrl}" target="_blank" class="${baseClass} ${typeDef.color} hover:brightness-95 active:scale-[0.98]">${iconHtml}<span>${labelText}</span><span class="material-symbols-outlined text-base ml-auto opacity-50" aria-hidden="true">open_in_new</span></a>`
+            : `<div class="${baseClass} bg-black/5 dark:bg-white/5 text-slate-400 dark:text-slate-600 pointer-events-none line-through" title="除外済のため閲覧できません">${iconHtml}<span>${labelText}</span></div>`;
+        }).join('');
+      }
+
+      // ★追加：一覧カードのタップで開く、資産の詳細シート。
+      //   一覧から外した情報(ID・拠点・購入日・書類ボタン)を、ここに集約する。
+      window.openDetailSheet = function(index) {
+        const a = filteredAssets[index];
+        if (!a) return;
+
+        const isAssetActive = utils.isAssetActive(a);
+        const formattedDate = utils.formatDate(a.purchaseDate);
+        const lampClass = isAssetActive
+          ? 'bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.6)]'
+          : 'bg-slate-400 dark:bg-slate-600';
+        const statusText = isAssetActive ? '稼働中' : '台帳から除外済';
+
+        document.getElementById('detail-sheet-content').innerHTML = `
+          <div class="flex items-center gap-2 mb-2">
+            <span class="w-2.5 h-2.5 rounded-full shrink-0 ${lampClass}" title="${statusText}"></span>
+            <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-black/5 dark:bg-white/10 text-slate-800 dark:text-slate-200 tracking-wider">${a.catName || a.cat || '未分類'}</span>
+            <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-black/5 dark:bg-white/10 text-slate-800 dark:text-slate-200 tracking-wider">${a.locName || a.loc || '未定'}</span>
+          </div>
+
+          <h2 id="detail-sheet-title" class="text-lg font-black token-text-primary tracking-tight mb-1">${a.name || '名称未設定'}</h2>
+
+          <div class="flex items-center min-w-0 text-sm font-bold token-text-secondary mb-4">
+            <span class="truncate">${a.maker || 'Unknown'}</span>
+            <span class="text-slate-300 dark:text-slate-600 mx-1.5 shrink-0">|</span>
+            <span class="font-mono truncate">${a.model || 'N/A'}</span>
+          </div>
+
+          <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-xs mb-5 pb-5 border-b border-slate-200/50 dark:border-white/5">
+            <dt class="font-bold text-slate-400 dark:text-slate-500">資産ID</dt>
+            <dd class="font-mono font-bold token-text-secondary">${a.id || 'N/A'}</dd>
+            <dt class="font-bold text-slate-400 dark:text-slate-500">状態</dt>
+            <dd class="font-bold token-text-secondary">${statusText}</dd>
+            ${formattedDate ? `
+            <dt class="font-bold text-slate-400 dark:text-slate-500">購入日</dt>
+            <dd class="font-bold token-text-secondary">${formattedDate}</dd>` : ''}
+          </dl>
+
+          <div class="flex flex-col gap-2">
+            <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider ml-1 mb-1">関連書類</span>
+            ${buildButtonsHtml(a.files, isAssetActive)}
+          </div>
+        `;
+
+        openSheet('detail');
       }
 
       function renderEmptyState(message) {
-        document.getElementById('asset-list').innerHTML = `
+        const listContainer = document.getElementById('asset-list');
+        listContainer.innerHTML = `
           <div class="col-span-full bg-white dark:bg-[#1e1f20] p-10 text-center text-sm font-bold text-slate-600 dark:text-slate-300 rounded-[24px] border border-slate-200/20 dark:border-white/5">
             ${message}
           </div>
         `;
+        listContainer.setAttribute('aria-busy', 'false');
       }
 
       function renderLoadingState(message) {
-        document.getElementById('asset-list').innerHTML = `
+        const listContainer = document.getElementById('asset-list');
+        listContainer.setAttribute('aria-busy', 'true');
+        listContainer.innerHTML = `
           <div class="col-span-full bg-white dark:bg-[#1e1f20] py-12 rounded-[24px] flex flex-col items-center gap-4 border border-slate-200/20 dark:border-white/5">
-            <div class="w-8 h-8 border-4 border-slate-100 dark:border-white/5 border-t-blue-500 rounded-full animate-spin"></div>
+            <div class="w-8 h-8 border-4 border-slate-100 dark:border-white/5 border-t-blue-500 rounded-full animate-spin" role="status" aria-label="読み込み中"></div>
             <div class="text-sm font-bold text-slate-600 dark:text-slate-300">${message}</div>
           </div>
         `;
@@ -715,6 +1121,12 @@
         }
 
         if (e.key === 'Escape') {
+          // ★変更：ボトムシートが開いている場合は、まずそれを閉じることを優先する
+          //   (検索クリアとキー操作が競合しないようにする)
+          if (activeSheetId) {
+            closeSheet();
+            return;
+          }
           clearSearch();
           if (document.activeElement) {
             document.activeElement.blur();

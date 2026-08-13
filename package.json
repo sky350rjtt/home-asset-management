@@ -1,0 +1,22 @@
+{
+  "name": "home-asset-management-gas",
+  "version": "1.0.0",
+  "private": true,
+  "description": "HomeAssetManagement — Google Apps Script開発環境（clasp）。アプリ本体はNode.jsで動かない（GASランタイム上で実行される）ため、Node.jsはclasp CLIの実行環境としてのみ使う。",
+  "scripts": {
+    "login": "clasp login --no-localhost",
+    "logout": "clasp logout",
+    "status": "clasp status",
+    "pull": "clasp pull",
+    "push": "clasp push",
+    "push:watch": "clasp push --watch",
+    "open": "clasp open-script",
+    "deploy": "clasp deploy",
+    "deployments": "clasp deployments",
+    "versions": "clasp versions"
+  },
+  "devDependencies": {
+    "@google/clasp": "^2.4.2",
+    "@types/google-apps-script": "^1.0.83"
+  }
+}

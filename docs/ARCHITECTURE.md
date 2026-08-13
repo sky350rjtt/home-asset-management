@@ -100,8 +100,9 @@ Google Apps Scriptは、`.gs` ファイルを跨いだ ES Modules 的な `import
   RemarksBatch.gs → Config, AssetMasterDAO, VectorMaintenance（+ DriveApp）
 
 [Layer 7: UI（google.script.run 経由でLayer5/Layer3を呼ぶ）]
-  Index.html        → Entry.gs（getModelSettings, runScanFromUI）
-  index_viewer.html → Entry.gs（getAssetStorageData）, IntelligentSearch.gs（EXCLUSIVE_AI_VECTOR_SEARCH_ENTRANCE）
+  Index.html        → Entry.gs（getModelSettings, runScanFromUI）※後方互換のため残置。doGetの既定ルーティング先
+  index_viewer.html → Entry.gs（getAssetStorageData, getModelSettings, runScanFromUI, getCurrentUserRole）,
+                       IntelligentSearch.gs（EXCLUSIVE_AI_VECTOR_SEARCH_ENTRANCE）
 ```
 
 IntelligentSearch.gs は以前 `Entry.gs` へ逆依存していたため独立した層（旧Layer 5'）として扱っていたが、
@@ -138,6 +139,19 @@ IntelligentSearch.gs は以前 `Entry.gs` へ逆依存していたため独立�
   （`p=v` → `index_viewer.html`、それ以外 → `Index.html`）。台帳データの取得は
   `AssetPresenter.loadFromLedger(false)` に委譲し、`Entry.gs`自身はUI向けエンドポイント
   （`getAssetStorageData`, `getModelSettings`, `runScanFromUI`等）の提供に専念する。
+- **Entry.gs の `getCurrentUserRole()`** は `Config.load()` の `ADMIN_EMAILS`（カンマ区切り文字列）にのみ依存し、
+  現在アクセスしているユーザーが管理者かどうかを`'admin'|'viewer'`で返す。UIの出し分け専用（実行制御には使わない）。
+  `Session.getActiveUser().getEmail()` がアクセス者本人のメールアドレスを返すのは
+  `appsscript.json` の `webapp.executeAs` が `"USER_ACCESSING"` の場合のみという制約があり、
+  `"USER_DEPLOYING"`（自分として実行）のままだと常に空文字を返す。この制約により、WebAppは
+  `executeAs: "USER_ACCESSING"` でデプロイする方針とした（2026-08-14。詳細は`CHANGELOG.md`参照）。
+  この方式では台帳スプレッドシートおよびConfig記載のDriveフォルダへの読み書きも各アクセス者自身の
+  権限で実行されるため、閲覧者にもスプレッドシートの共有権限（最低限Viewer）を個別に付与する必要がある。
+- **旧 `Index.html`（独立ページ）は`index_viewer.html`の`scan-sheet`（ボトムシート）に統合された**。
+  `getModelSettings()`・`runScanFromUI()`の呼び出しロジック自体はそのまま`scan-sheet`側へ移植されており、
+  `Entry.gs`側の変更は不要だった（両画面が同じシグネチャの関数を呼ぶだけの関係になっている）。
+  `Index.html`自体は削除せず残置している。理由は`doGet(e)`の既定ルーティング（`p`パラメータ省略時の
+  遷移先）としての後方互換性のため。
 
 ---
 

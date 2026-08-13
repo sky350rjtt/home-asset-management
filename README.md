@@ -29,9 +29,26 @@ INBOXフォルダにPDFを投入すると、Gemini APIが内容を解析し、
 
 1. Google スプレッドシートを作成
 2. Config シート・Masters シートを作成(詳細は docs/SPEC.md)
-3. GASエディタに src/ 配下のファイルを配置
+3. src/ 配下のファイルをGASプロジェクトへ反映する（以下いずれか）
+   - GASエディタに直接配置（手動コピペ）
+   - [clasp](https://github.com/google/clasp) でpush（`.devcontainer/` に開発環境あり。下記参照）
 4. Gemini API キーを Config シートに設定
-5. WebApp としてデプロイ
+5. WebApp としてデプロイ（`webapp.executeAs` は `USER_ACCESSING`。詳細は `docs/ARCHITECTURE.md` 2.2節）
+
+## GAS開発環境（clasp）
+
+VS Codeの「Dev Containers」拡張でこのリポジトリを開くと、Node.js + clasp の環境が立ち上がる。
+
+1. コンテナ起動後、初回のみ認証：`npm run login`（`--no-localhost`でURLが表示されるので、
+   ブラウザで開いて認可コードをターミナルに貼り付ける）
+2. `.clasp.json` の `scriptId` を、対象のApps ScriptプロジェクトのスクリプトID
+   （GASエディタ → プロジェクトの設定 → スクリプトID）に書き換える
+3. `npm run push` でこのリポジトリの内容をApps Scriptプロジェクトへ反映する
+   （**注意**：Apps Script側の内容を上書きする。手動編集分が反映されていない場合は先に`npm run pull`で
+   差分を確認する）
+
+主なコマンド：`npm run push` / `npm run pull` / `npm run status` / `npm run open`（GASエディタを開く）/
+`npm run deploy`
 
 ## 設計原則
 

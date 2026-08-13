@@ -51,6 +51,10 @@ const Config = (() => {
         DOCS_FOLDER_ID:       String(raw['DOCS_FOLDER_ID']       || ''),
         UNRESOLVED_FOLDER_ID: String(raw['UNRESOLVED_FOLDER_ID'] || ''),
         ASSET_MASTER_ID:      String(raw['ASSET_MASTER_ID']      || ''),
+        // 【管理者判定】カンマ区切りのメールアドレス一覧。未設定でもエラーにしない
+        //   （閲覧機能自体はこれが無くても成立するため、fail-fastの対象外）。
+        //   空配列への変換はgetCurrentUserRole()側の責務とし、ここでは生文字列のまま保持する。
+        ADMIN_EMAILS:         String(raw['ADMIN_EMAILS']         || ''),
         // 【検索の足切り閾値】この値に「正解」は無く運用しながら調整するものなので、
         //   コード側に決め打ちの数値は置かない。未設定時は0（＝足切りしない）という
         //   中立な既定値にとどめ、閾値を持ちたければConfigシートに明示的に追加してもらう。

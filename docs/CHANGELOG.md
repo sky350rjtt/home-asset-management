@@ -189,6 +189,37 @@ v20を現行稼働バージョンとして固定した後の変更は、バー�
      `IntelligentSearch.gs`の双方がそこに一方向で依存する形に整理。`includeEmbedding`引数による
      不要データ転送カット（Viewer初期表示では軽量版、AI検索ではベクトル付き）は変更せず維持した。
 
+### 2026-08-14
+
+`index_viewer.html`の情報アーキテクチャ再設計（一覧カードから探すための情報以外を撤去し詳細シートへ集約、
+旧`Index.html`の登録機能をボトムシートへ統合、sort/filter/scan/detailの4シートを`SHEET_CONFIG`で
+共通管理する基盤化）と併せて、管理者限定UI出し分けのためのバックエンド対応を実施。
+
+1. **管理者判定APIの新規追加**（`ui/Entry.gs` の `getCurrentUserRole()`）
+   - Configシートの新規任意項目 `ADMIN_EMAILS`（カンマ区切りのメールアドレス、`config/Config.gs`）と
+     `Session.getActiveUser().getEmail()` を突き合わせ、`'admin'|'viewer'` を返す。
+   - 用途はUIの出し分け（登録FABの表示可否）専用と定義し、`runScanFromUI()`等の実行制御には使わない
+     方針を明確化した。
+   - `ADMIN_EMAILS`は未設定でもエラーにしない（fail-fastの対象外）。閲覧機能自体はこの項目が無くても
+     成立するため。
+2. **WebAppデプロイ設定の変更**（`appsscript.json`）
+   - `webapp.executeAs` を `"USER_DEPLOYING"` から `"USER_ACCESSING"` に変更。
+   - 理由：`Session.getActiveUser().getEmail()` は `executeAs: "USER_DEPLOYING"` のままでは
+     アクセス者本人のメールアドレスを取得できず（常に空文字）、`getCurrentUserRole()`が機能しないため。
+   - 副作用として、台帳スプレッドシート・Config記載のDriveフォルダへのアクセスがアクセス者本人の権限で
+     実行される方式に変わるため、閲覧者を含む全利用者に対して台帳スプレッドシートの共有権限（最低限
+     Viewer）を個別付与する運用が必要になった（詳細は`ARCHITECTURE.md` 2.2節）。
+
+### 2026-08-14（2）
+
+GAS開発環境をdevcontainer化。`.devcontainer/devcontainer.json`（Node.js 20 + clasp）、
+`package.json`（`@google/clasp`, `@types/google-apps-script`）、`.clasp.json`（`rootDir: "."`）、
+`.claspignore`（`.gs`/`.js`/`.html`/`appsscript.json`のみpush対象）、`jsconfig.json`
+（`.gs`ファイルへのGAS組込サービスの型補完用）を新規追加。これまでGASエディタへの手動コピペで
+運用していたコード反映を、`clasp push`/`pull`で行えるようにした（README.mdの「GAS開発環境」節に
+手順を記載）。`.clasp.json`の`scriptId`はプレースホルダのままコミットしており、利用時に
+実際のスクリプトIDへの置き換えが必要。
+
 ---
 
 ## 付録：バージョンを特定できない変更（★マークのみ、コード内コメントより）

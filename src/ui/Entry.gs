@@ -9,6 +9,7 @@
 //   - getAssetStorageData() : 台帳データをViewer表示用に抽出（AI検索は intelligentSearch.gs が担当）
 //   - getModelSettings() : UI（HTML）初期化時にモデル一覧と現在値を取得
 //   - runScanFromUI()    : UIから実行された時のエントリポイント（モデル変更反映付き）
+//   - getCurrentUserRole() : 現在アクセスしているユーザーの役割判定（'admin'|'viewer'、UI出し分け専用）
 // =============================================================================
 
 function onOpen() {
@@ -133,6 +134,25 @@ function getModelSettings() {
     currentModel: currentModel,
     models: models
   };
+}
+
+/**
+ * 現在アクセスしているユーザーの役割を判定する（'admin' | 'viewer'）。
+ * 用途はUIの出し分け専用（例: 登録FABの表示可否）。実行制御（runScanFromUI等の権限チェック）には使わない。
+ *
+ * 【前提】Session.getActiveUser().getEmail() がアクセス者本人のメールアドレスを返すのは、
+ *   WebAppが appsscript.json の webapp.executeAs = "USER_ACCESSING"（ユーザーとしてアクセス）で
+ *   デプロイされている場合のみ。"USER_DEPLOYING"（自分として実行）のままだと常に空文字になり、
+ *   このメソッドは常に 'viewer' を返す。
+ */
+function getCurrentUserRole() {
+  const email = (Session.getActiveUser().getEmail() || '').toLowerCase();
+  const config = Config.load();
+  const adminEmails = (config.ADMIN_EMAILS || '')
+    .split(',')
+    .map(s => s.trim().toLowerCase())
+    .filter(s => s);
+  return adminEmails.includes(email) ? 'admin' : 'viewer';
 }
 
 function validateConfig() {

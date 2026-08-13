@@ -1,0 +1,27 @@
+{
+  "name": "GAS開発環境 (Node.js + clasp)",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:20-bookworm",
+  "remoteUser": "node",
+
+  // clasp のOAuthトークン(~/.clasprc.json)をボリュームに退避し、コンテナを再ビルドしても
+  // ログインし直さずに済むようにする（本体はDockerボリューム側に置き、ホームディレクトリからは
+  // シンボリックリンクで参照する。単一ファイルへの直接ボリュームマウントは扱いが不安定なため避けた）。
+  "mounts": [
+    "source=home-asset-management-clasp-auth,target=/home/node/.clasp-auth,type=volume"
+  ],
+
+  "postCreateCommand": "npm install",
+  "postStartCommand": "mkdir -p /home/node/.clasp-auth && [ -e /home/node/.clasprc.json ] || ln -s /home/node/.clasp-auth/.clasprc.json /home/node/.clasprc.json",
+
+  "customizations": {
+    "vscode": {
+      "settings": {
+        // GASの .gs は拡張子的には認識されないため、VS Code組み込みのJS言語サービス
+        // （補完・ホバー・jsconfig.json経由の型情報）を効かせるためにJavaScriptとして扱わせる
+        "files.associations": {
+          "*.gs": "javascript"
+        }
+      }
+    }
+  }
+}

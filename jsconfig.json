@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "target": "es2019",
+    "checkJs": false,
+    "types": ["google-apps-script"]
+  },
+  "include": ["src/**/*.gs"]
+}
