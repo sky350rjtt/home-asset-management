@@ -3,3 +3,4 @@
 !**/*.gs
 !**/*.js
 !**/*.html
+node_modules/**
