@@ -437,6 +437,12 @@
             console.warn('権限確認に失敗しました。登録アイコンは表示されません。', err);
           })
           .getCurrentUserRole();
+
+        // 【一時デバッグ用】原因切り分け後に削除する。
+        google.script.run
+          .withSuccessHandler((info) => console.log('[debug] getCurrentUserRole詳細:', info))
+          .withFailureHandler((err) => console.warn('[debug] 取得失敗:', err))
+          ._debugCurrentUser();
       };
 
       function initUI() {
