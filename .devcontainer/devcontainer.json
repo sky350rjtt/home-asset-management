@@ -6,12 +6,20 @@
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
 
-  // claude / gemini / codex / clasp のログイン情報をDockerボリュームに永続化し、
+  // agyのインストール先(~/.local/bin)はnpmのグローバルbinと違いデフォルトPATHに含まれないため、
+  // .bashrc等の起動ファイル経由に頼らずVS Codeの非対話シェルでも確実に見えるよう明示的に追加。
+  "remoteEnv": {
+    "PATH": "/home/node/.local/bin:${containerEnv:PATH}"
+  },
+
+  // claude / antigravity(旧gemini) / codex / clasp のログイン情報をDockerボリュームに永続化し、
   // コンテナを再ビルドしても毎回ログインし直さずに済むようにする。
   // ディレクトリ型の設定（.claude, .gemini, .codex）はボリュームを直接マウントし、
   // ファイル型の設定（.claude.json, .clasprc.json）は単一ファイル直接マウントが
   // 不安定なため、専用ディレクトリに置いてsymlinkで参照する。
-  // 名前を固定しているので、devcontainer-template を使う全プロジェクトで認証情報を共有する。
+  // 名前を固定しているので、このテンプレートを使う全プロジェクトで認証情報を共有する。
+  // 2026-06-18のGemini CLI個人向けOAuth廃止に伴いAntigravity CLI(agy)へ移行。
+  // agyは ~/.gemini を設定ディレクトリとして再利用するため gemini-cli-config ボリュームはそのまま流用。
   "mounts": [
     "source=ai-cli-auth-files,target=/home/node/.ai-auth-files,type=volume",
     "source=claude-cli-config,target=/home/node/.claude,type=volume",
@@ -19,7 +27,7 @@
     "source=codex-cli-config,target=/home/node/.codex,type=volume"
   ],
 
-  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y jq tree && sudo mkdir -p /home/node/.ai-auth-files && sudo chown -R node:node /home/node/.claude /home/node/.gemini /home/node/.codex /home/node/.ai-auth-files && npm install -g @anthropic-ai/claude-code @google/gemini-cli @openai/codex @google/clasp tsx && npm install",
+  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y jq tree curl && sudo mkdir -p /home/node/.ai-auth-files && sudo chown -R node:node /home/node/.claude /home/node/.gemini /home/node/.codex /home/node/.ai-auth-files && npm install -g @anthropic-ai/claude-code @openai/codex @google/clasp tsx && curl -fsSL https://antigravity.google/cli/install.sh | bash && npm install",
   "postStartCommand": "[ -L /home/node/.claude.json ] || ln -s /home/node/.ai-auth-files/.claude.json /home/node/.claude.json; [ -L /home/node/.clasprc.json ] || ln -s /home/node/.ai-auth-files/.clasprc.json /home/node/.clasprc.json",
 
   "customizations": {
