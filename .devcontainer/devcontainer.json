@@ -11,7 +11,7 @@
   ],
 
   "postCreateCommand": "npm install",
-  "postStartCommand": "mkdir -p /home/node/.clasp-auth && [ -e /home/node/.clasprc.json ] || ln -s /home/node/.clasp-auth/.clasprc.json /home/node/.clasprc.json",
+  "postStartCommand": "mkdir -p /home/node/.clasp-auth && [ -L /home/node/.clasprc.json ] || ln -s /home/node/.clasp-auth/.clasprc.json /home/node/.clasprc.json",
 
   "customizations": {
     "vscode": {
