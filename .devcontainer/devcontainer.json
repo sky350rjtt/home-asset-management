@@ -1,21 +1,42 @@
 {
-  "name": "GAS開発環境 (Node.js + clasp)",
-  "image": "mcr.microsoft.com/devcontainers/javascript-node:20-bookworm",
+  "name": "home-asset-management Dev Container",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:24-bookworm",
   "remoteUser": "node",
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
 
-  // clasp のOAuthトークン(~/.clasprc.json)をボリュームに退避し、コンテナを再ビルドしても
-  // ログインし直さずに済むようにする（本体はDockerボリューム側に置き、ホームディレクトリからは
-  // シンボリックリンクで参照する。単一ファイルへの直接ボリュームマウントは扱いが不安定なため避けた）。
+  // claude / gemini / codex / clasp のログイン情報をDockerボリュームに永続化し、
+  // コンテナを再ビルドしても毎回ログインし直さずに済むようにする。
+  // ディレクトリ型の設定（.claude, .gemini, .codex）はボリュームを直接マウントし、
+  // ファイル型の設定（.claude.json, .clasprc.json）は単一ファイル直接マウントが
+  // 不安定なため、専用ディレクトリに置いてsymlinkで参照する。
+  // 名前を固定しているので、devcontainer-template を使う全プロジェクトで認証情報を共有する。
   "mounts": [
-    "source=home-asset-management-clasp-auth,target=/home/node/.clasp-auth,type=volume"
+    "source=ai-cli-auth-files,target=/home/node/.ai-auth-files,type=volume",
+    "source=claude-cli-config,target=/home/node/.claude,type=volume",
+    "source=gemini-cli-config,target=/home/node/.gemini,type=volume",
+    "source=codex-cli-config,target=/home/node/.codex,type=volume"
   ],
 
-  "postCreateCommand": "npm install",
-  "postStartCommand": "mkdir -p /home/node/.clasp-auth && [ -L /home/node/.clasprc.json ] || ln -s /home/node/.clasp-auth/.clasprc.json /home/node/.clasprc.json",
+  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y jq tree && sudo mkdir -p /home/node/.ai-auth-files && sudo chown -R node:node /home/node/.claude /home/node/.gemini /home/node/.codex /home/node/.ai-auth-files && npm install -g @anthropic-ai/claude-code @google/gemini-cli @openai/codex @google/clasp tsx && npm install",
+  "postStartCommand": "[ -L /home/node/.claude.json ] || ln -s /home/node/.ai-auth-files/.claude.json /home/node/.claude.json; [ -L /home/node/.clasprc.json ] || ln -s /home/node/.ai-auth-files/.clasprc.json /home/node/.clasprc.json",
 
   "customizations": {
     "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "mhutchie.git-graph",
+        "openai.codex",
+        "anthropic.claude-code"
+      ],
       "settings": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.codeActionsOnSave": {
+          "source.fixAll.eslint": "explicit"
+        },
         // GASの .gs は拡張子的には認識されないため、VS Code組み込みのJS言語サービス
         // （補完・ホバー・jsconfig.json経由の型情報）を効かせるためにJavaScriptとして扱わせる
         "files.associations": {
