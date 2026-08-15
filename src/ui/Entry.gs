@@ -157,16 +157,6 @@ function getCurrentUserRole() {
   return adminEmails.includes(email) ? 'admin' : 'viewer';
 }
 
-// 【一時デバッグ用】Session.getActiveUser()が実際に何を返しているか、
-//   ブラウザのconsole.logで見えるようにするためだけの関数。原因切り分け後に削除する。
-function _debugCurrentUser() {
-  return {
-    getActiveUserEmail:    Session.getActiveUser().getEmail(),
-    getEffectiveUserEmail: Session.getEffectiveUser().getEmail(),
-    adminEmailsRaw:        Config.load().ADMIN_EMAILS,
-  };
-}
-
 function validateConfig() {
   try {
     Config.clear();
