@@ -28,14 +28,16 @@ function scanAndExecute() {
 function doGet(e) {
   const page = e && e.parameter && e.parameter.p;
 
-  if (page === 'v') {
-    return HtmlService.createHtmlOutputFromFile('src/ui/index_viewer')
-      .setTitle('Asset Master Viewer')
+  // 【メインURLの切り替え】日常利用はViewer(閲覧+管理者のみ登録)をメインに変更。
+  //   旧メイン画面のIndex(AIスキャナー専用)は ?p=admin の予備URLとして残す。
+  if (page === 'admin') {
+    return HtmlService.createHtmlOutputFromFile('src/ui/Index')
+      .setTitle('HomeAsset AI Scanner')
       .addMetaTag('viewport', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no')
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   } else {
-    return HtmlService.createHtmlOutputFromFile('src/ui/Index')
-      .setTitle('HomeAsset AI Scanner')
+    return HtmlService.createHtmlOutputFromFile('src/ui/index_viewer')
+      .setTitle('Asset Master Viewer')
       .addMetaTag('viewport', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no')
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   }
