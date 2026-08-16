@@ -494,6 +494,14 @@
               return;
             }
             initUI();
+
+            // 【QR/NFCディープリンク】?id=資産ID で開かれた場合、該当資産の詳細カードを自動で開く。
+            //   将来システムをリプレイスしてもこのURL仕様（?id=）だけは引き継ぐ想定。
+            const deepLinkId = new URLSearchParams(window.location.search).get('id');
+            if (deepLinkId) {
+              const idx = filteredAssets.findIndex(x => x.id === deepLinkId);
+              if (idx !== -1) openDetailSheet(idx);
+            }
           })
           .withFailureHandler((err) => {
             document.getElementById('asset-list').innerHTML = `<div class="col-span-full p-6 text-center text-sm text-rose-500 bg-rose-50 dark:bg-rose-950/20 rounded-[24px]">読み込みに失敗しました: ${err.message}</div>`;
@@ -1212,9 +1220,47 @@
             <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider ml-1 mb-1">関連書類</span>
             ${buildButtonsHtml(a.files, isAssetActive)}
           </div>
+
+          ${(a.files || []).some(f => f.type === 'MNL') ? `
+          <div class="flex flex-col gap-2 mt-5 pt-5 border-t border-slate-200/50 dark:border-white/5">
+            <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider ml-1 mb-1">AIに取扱説明書について質問</span>
+            <textarea id="qa-question-input" rows="2" placeholder="例: エラーコードC02の直し方は？"
+              class="w-full text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#131314] token-text-primary p-3 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/40"></textarea>
+            <button type="button" id="qa-ask-btn" onclick="askAssetQuestion('${escapedId}')"
+              class="text-xs font-bold rounded-xl bg-blue-600 text-white py-2.5 active:scale-[0.98] transition-all disabled:opacity-50">質問する</button>
+            <div id="qa-answer-area" class="hidden text-xs token-text-secondary bg-black/5 dark:bg-white/5 rounded-xl p-3 whitespace-pre-wrap"></div>
+          </div>` : ''}
         `;
 
         openSheet('detail');
+      }
+
+      // 【詳細カード内AI Q&A】取扱説明書PDFを根拠にGeminiへ質問する。
+      window.askAssetQuestion = function(assetId) {
+        const input       = document.getElementById('qa-question-input');
+        const btn         = document.getElementById('qa-ask-btn');
+        const answerArea  = document.getElementById('qa-answer-area');
+        const question    = input.value.trim();
+        if (!question) return;
+
+        btn.disabled = true;
+        btn.textContent = '回答を生成中…(最大1分程度)';
+        answerArea.classList.add('hidden');
+
+        google.script.run
+          .withSuccessHandler((result) => {
+            btn.disabled = false;
+            btn.textContent = '質問する';
+            answerArea.textContent = (result && result.answer) || '回答を取得できませんでした。';
+            answerArea.classList.remove('hidden');
+          })
+          .withFailureHandler((err) => {
+            btn.disabled = false;
+            btn.textContent = '質問する';
+            answerArea.textContent = 'エラーが発生しました: ' + err.message;
+            answerArea.classList.remove('hidden');
+          })
+          .askAboutAsset(assetId, question);
       }
 
       function renderEmptyState(message) {

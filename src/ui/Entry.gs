@@ -10,6 +10,7 @@
 //   - getModelSettings() : UI（HTML）初期化時にモデル一覧と現在値を取得
 //   - runScanFromUI()    : UIから実行された時のエントリポイント（モデル変更反映付き）
 //   - getCurrentUserRole() : 現在アクセスしているユーザーの役割判定（'admin'|'viewer'、UI出し分け専用）
+//   - askAboutAsset()    : 詳細カードから取扱説明書についてAIに質問（AssetQA.gsへ委譲）
 // =============================================================================
 
 function onOpen() {
@@ -207,6 +208,14 @@ function getCurrentUserRole() {
   const email = (Session.getActiveUser().getEmail() || '').toLowerCase();
   const adminEmails = _parseEmailList(Config.load().ADMIN_EMAILS);
   return adminEmails.includes(email) ? 'admin' : 'viewer';
+}
+
+/**
+ * 詳細カードから、資産の取扱説明書についてAIに質問する（AssetQA.gsへの薄い委譲）。
+ */
+function askAboutAsset(assetId, question) {
+  _assertAllowedUser();
+  return AssetQA.ask(assetId, question);
 }
 
 function validateConfig() {

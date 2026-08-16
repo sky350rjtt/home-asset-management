@@ -1,10 +1,11 @@
 // =============================================================================
 // PromptBuilder.gs
 //
-// 役割: 資産解析用Geminiプロンプトの組み立てロジック
+// 役割: 資産関連Geminiプロンプトの組み立てロジック
 // 責任: Location.gs（新規登録）とAddFolder.gs（既存資産への書類追加）が共用する
-//       プロンプト本文の組み立てのみ。書類種別コード等の「定義」はConstants.gsに
-//       残したまま、その定義を使って実際のプロンプト文字列を組み立てる「ロジック」を
+//       資産解析プロンプト、およびAssetQA.gsが使う詳細カード内Q&Aプロンプトの
+//       組み立てのみ。書類種別コード等の「定義」はConstants.gsに残したまま、
+//       その定義を使って実際のプロンプト文字列を組み立てる「ロジック」を
 //       ここに集約する（役割分担: Constants=定義、PromptBuilder=組み立て）。
 //
 // 流用: 流用不可。remarksの生成指示・summaryの扱い・files[]マッピング仕様など、
@@ -53,6 +54,29 @@ Category list:
 ${catText}
 
 CRITICAL: Extract data by combining all files. modelNumber is the primary identifier — read all pages carefully. You MUST map each input filename to its corresponding docType in the "files" array. Return null for unreadable fields.
+`;
+  },
+
+  /**
+   * 詳細カード内AI Q&A用プロンプトを組み立てる。
+   * 添付の取扱説明書PDFのみを根拠に、ユーザーの自由入力質問に日本語で回答させる。
+   * @param {string} maker    - メーカー名
+   * @param {string} product  - 製品名
+   * @param {string} model    - 型番
+   * @param {string} question - ユーザーの質問文
+   */
+  buildAssetQAPrompt(maker, product, model, question) {
+    return `
+あなたは「${maker} ${product} (${model})」の専任サポートAIです。
+添付された取扱説明書の内容のみを根拠に、ユーザーの質問に日本語でわかりやすく簡潔に回答してください。
+説明書に記載が無い内容は、憶測で答えず「取扱説明書には記載がありませんでした」と正直に回答してください。
+
+回答は以下のJSON形式のみで返してください。説明文やマークダウンのコードフェンスは不要です。
+{
+  "answer": "質問への回答本文（日本語）"
+}
+
+ユーザーの質問: ${question}
 `;
   },
 };
