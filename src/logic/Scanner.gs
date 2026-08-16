@@ -59,18 +59,31 @@ const Scanner = {
     const unresFolder = DriveApp.getFolderById(config.UNRESOLVED_FOLDER_ID);
  
     let newCount = 0, mergedCount = 0, errorCount = 0, heicCount = 0;
- 
+    let isTimeLimitReached = false;
+
+    // 【GAS実行時間ガード】GASの最大実行時間（6分）を超過して強制中断されるのを防ぐため、
+    // 4分（240秒）を経過した時点で安全にループを抜け、残りは次回スキャンに持ち越す。
+    const startTime = Date.now();
+    const MAX_EXECUTION_TIME_MS = 240 * 1000;
+
     const subFolders = inboxRoot.getFolders();
     while (subFolders.hasNext()) {
+      // 時間制限チェック
+      if (Date.now() - startTime > MAX_EXECUTION_TIME_MS) {
+        console.warn('[Scanner] 実行時間が4分を超過したため、残りの処理を次回スキャンに持ち越します。');
+        isTimeLimitReached = true;
+        break;
+      }
+
       const subFolder  = subFolders.next();
       const folderName = subFolder.getName().toUpperCase();
- 
+
       if (folderName === Constants.ADD_FOLDER) {
         const r = AddFolder.process(subFolder, config, logSheet, docsFolder, unresFolder);
         mergedCount += r.mergedCount;
         errorCount  += r.errorCount;
         heicCount   += r.heicCount;
- 
+
       } else {
         const location = masters.locations.find(l => l.code === folderName);
         if (!location) {
@@ -83,16 +96,19 @@ const Scanner = {
         heicCount  += r.heicCount;
       }
     }
- 
+
     let message = `処理完了\n新規資産登録：${newCount}件\n既存への書類追加：${mergedCount}件\nエラー隔離：${errorCount}件`;
+    if (isTimeLimitReached) {
+      message += `\n\n⏳ 実行時間の上限（4分）に達したため、処理を一時中断しました。未処理のファイルは次回のスキャンで処理されます。`;
+    }
     if (heicCount > 0) {
       message += `\n\n⚠️ HEIC形式の画像が ${heicCount} 件スキップされました。\n`
                + `JPEGまたはPNGに変換してから再投入してください。\n`
                + `（iPhone設定 → カメラ → フォーマット → 「互換性優先」を推奨）`;
     }
- 
+
     try { SpreadsheetApp.getUi().alert(message); } catch(_) {}
- 
-    return { newCount, mergedCount, errorCount, heicCount, message };
+
+    return { newCount, mergedCount, errorCount, heicCount, message, isTimeLimitReached };
   },
 };

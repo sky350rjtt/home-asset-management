@@ -79,28 +79,20 @@ const Location = {
       }
       // =======================================================================
 
-      // remarksとembeddingをあわせて渡し、AssetMasterDAO.insert()で台帳へ一括登録する。
-      // summary(要約文)はベクトル化にのみ使い、ここでは一切保存しない（使い捨て）。
-      const assetRow = AssetMasterDAO.insert(config.ASSET_MASTER_ID, {
-        assetId,
-        locationCode:   location.code, // B列に入るコード（H01）
-        locationName:   location.name, // C列に入る名前（Nerima）
-        category:       info.category,
-        maker:          info.maker,
-        productName:    info.productName,
-        modelNumber:    info.modelNumber,
-        purchaseDate:   info.purchaseDate,
-        purchasePrice:  info.purchasePrice,
-        purchaseStore:  info.purchaseStore,
-        warrantyExpiry: info.warrantyExpiry,
-        status:         info.status,
-        remarks:        info.remarks ? String(info.remarks).trim() : '', // S列：人間＆AI共用の言い換えワード
-        embedding:      embeddingString // T列：業務ロジック層で生成したベクトルのJSON文字列
-      });
- 
+      // =======================================================================
+      // 1. 各ファイルのリネームと移動、および書類IDの収集
+      //    ファイル移動を先に行い、すべて成功した段階で台帳へ一括登録する（アトミック性の担保）。
+      // =======================================================================
       const docTypeCounts = {};
- 
-      validFiles.forEach(file => {
+      const docIdsMap = {
+        MNL: [],
+        RCP: [],
+        WRT: [],
+        OTH: []
+      };
+      const processedFiles = [];
+
+      for (const file of validFiles) {
         const fname = file.getName();
         const ext = FileUtils.getExt(file);
         
@@ -111,28 +103,73 @@ const Location = {
           return targetFname === aiFname || targetFname.includes(aiFname) || aiFname.includes(targetFname);
         });
         const dt = fileMeta ? fileMeta.docType : Constants.DOC_TYPE.OTH.code;
- 
+
         if (!docTypeCounts[dt]) {
           docTypeCounts[dt] = 1;
         } else {
           docTypeCounts[dt]++;
         }
         const branchNum = String(docTypeCounts[dt]);
- 
+
         file.setName(FileUtils.buildFileName(
           [assetId, dt, info.maker, info.modelNumber, branchNum],
           ext
         ));
- 
-        if (assetRow) {
-          AssetMasterDAO.appendFileId(config.ASSET_MASTER_ID, assetRow, dt, file.getId());
+
+        // ドキュメントIDマップに追加
+        if (docIdsMap[dt]) {
+          docIdsMap[dt].push(file.getId());
+        } else {
+          docIdsMap.OTH.push(file.getId());
         }
- 
+
         FileUtils.move(file, folder, docsFolder);
-        SheetUtils.log(logSheet, [fname, assetId, 'NEW', `${dt}_${branchNum}`]);
-        newCount++;
-      });
- 
+        processedFiles.push({ fname, dt, branchNum });
+      }
+
+      // =======================================================================
+      // 2. 台帳への一括登録（insert）
+      //    全ファイルのfileIdをdocIdsとして1回のAPI呼び出し（appendRow）で登録する。
+      // =======================================================================
+      let insertedRow = 0;
+      try {
+        insertedRow = AssetMasterDAO.insert(config.ASSET_MASTER_ID, {
+          assetId,
+          locationCode:   location.code, // B列に入るコード（H01）
+          locationName:   location.name, // C列に入る名前（Nerima）
+          category:       info.category,
+          maker:          info.maker,
+          productName:    info.productName,
+          modelNumber:    info.modelNumber,
+          purchaseDate:   info.purchaseDate,
+          purchasePrice:  info.purchasePrice,
+          purchaseStore:  info.purchaseStore,
+          warrantyExpiry: info.warrantyExpiry,
+          status:         info.status,
+          remarks:        info.remarks ? String(info.remarks).trim() : '', // S列：人間＆AI共用の言い換えワード
+          embedding:      embeddingString, // T列：業務ロジック層で生成したベクトルのJSON文字列
+          docIds: {
+            MNL: docIdsMap.MNL.join(', '),
+            RCP: docIdsMap.RCP.join(', '),
+            WRT: docIdsMap.WRT.join(', '),
+            OTH: docIdsMap.OTH.join(', ')
+          }
+        });
+
+        // 成功ログ記録
+        processedFiles.forEach(({ fname, dt, branchNum }) => {
+          SheetUtils.log(logSheet, [fname, assetId, 'NEW', `${dt}_${branchNum}`]);
+          newCount++;
+        });
+
+      } catch (insertError) {
+        // 台帳書き込みに失敗した場合はロールバック
+        if (insertedRow > 0) {
+          try { AssetMasterDAO.deleteRow(config.ASSET_MASTER_ID, insertedRow); } catch(_) {}
+        }
+        throw insertError;
+      }
+
     } catch(e) {
       validFiles.forEach(f => FileUtils.moveToUnresolved(f, folder, unresFolder, 'PROCESS_ERROR'));
       SheetUtils.log(logSheet, ['一括処理エラー', location.code, 'ERROR', e.message]);

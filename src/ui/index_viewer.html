@@ -344,6 +344,26 @@
           return 'bg-white dark:bg-[#1e1f20]'; 
         },
 
+        // HTMLエスケープ（XSS対策）
+        escapeHtml(rawStr) {
+          if (rawStr == null) return '';
+          return String(rawStr)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+        },
+
+        // 安全なHTTP/HTTPS URLのみ許可（javascript:等の悪意あるリンク防止）
+        safeUrl(rawUrl) {
+          const url = this.cleanUrl(rawUrl);
+          if (/^https?:\/\//i.test(url)) {
+            return url;
+          }
+          return '#';
+        },
+
         // ★共通化：稼働/除外の判定ロジックを1箇所に集約（applyFiltersAndRenderとrenderListで
         //   重複していたものを解消）
         isAssetActive(asset) {
@@ -992,21 +1012,26 @@
           : 'bg-slate-400 dark:bg-slate-600';
         const lampTitle = isAssetActive ? '稼働中' : '台帳から除外済';
 
+        const escapedCat = utils.escapeHtml(a.catName || a.cat || '未分類');
+        const escapedName = utils.escapeHtml(a.name || '名称未設定');
+        const escapedMaker = utils.escapeHtml(a.maker || 'Unknown');
+        const escapedModel = utils.escapeHtml(a.model || 'N/A');
+
         // ★大変更：一覧カードは「探すための情報」だけに絞る。
         //   ID・拠点・購入日・書類ボタンは詳細シート(openDetailSheet)へ移動した。
         //   これにより製品名が視覚的に最も強い要素になり、本来あるべき階層になる。
         return `
           <div class="flex items-center gap-2 min-w-0 mb-1.5">
             <span class="w-2.5 h-2.5 rounded-full shrink-0 ${lampClass}" title="${lampTitle}"></span>
-            <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-black/5 dark:bg-white/10 text-slate-800 dark:text-slate-200 tracking-wider">${a.catName || a.cat || '未分類'}</span>
+            <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-black/5 dark:bg-white/10 text-slate-800 dark:text-slate-200 tracking-wider">${escapedCat}</span>
           </div>
 
-          <h2 class="text-base md:text-lg font-black ${titleTextClass} truncate tracking-tight mb-1">${a.name || '名称未設定'}</h2>
+          <h2 class="text-base md:text-lg font-black ${titleTextClass} truncate tracking-tight mb-1">${escapedName}</h2>
 
           <div class="flex items-center min-w-0 text-sm font-bold token-text-secondary">
-            <span class="truncate tracking-tight">${a.maker || 'Unknown'}</span>
+            <span class="truncate tracking-tight">${escapedMaker}</span>
             <span class="text-slate-300 dark:text-slate-600 mx-1.5 shrink-0">|</span>
-            <span class="font-mono tracking-tight truncate font-bold">${a.model || 'N/A'}</span>
+            <span class="font-mono tracking-tight truncate font-bold">${escapedModel}</span>
           </div>
         `;
       }
@@ -1026,18 +1051,19 @@
           const suffix = counts[f.type] > 1 ? counts[f.type] : '';
           const typeDef = FILE_TYPES[f.type] || FILE_TYPES['OTH'];
 
-          const targetUrl = utils.cleanUrl(f.url);
+          const targetUrl = utils.safeUrl(f.url);
           const isWebMnl = (f.type === 'MNL' && targetUrl.startsWith('http') && !targetUrl.includes('drive.google.com'));
           const iconName = isWebMnl ? 'language' : typeDef.icon;
           const labelText = isWebMnl ? `取扱説明書(Web)${suffix}` : `${typeDef.label}${suffix}`;
+          const escapedLabel = utils.escapeHtml(labelText);
 
           // 縦並びなので幅は100%、高さも十分に取れる(タップ誤爆のリスクが構造的に消える)
           const baseClass = `w-full h-12 px-4 text-sm font-bold rounded-xl flex items-center gap-2 transition-all border border-slate-200/10 dark:border-white/5 `;
           const iconHtml = `<span class="material-symbols-outlined text-lg" aria-hidden="true">${iconName}</span>`;
 
           return isAssetActive
-            ? `<a href="${targetUrl}" target="_blank" class="${baseClass} ${typeDef.color} hover:brightness-95 active:scale-[0.98]">${iconHtml}<span>${labelText}</span><span class="material-symbols-outlined text-base ml-auto opacity-50" aria-hidden="true">open_in_new</span></a>`
-            : `<div class="${baseClass} bg-black/5 dark:bg-white/5 text-slate-400 dark:text-slate-600 pointer-events-none line-through" title="除外済のため閲覧できません">${iconHtml}<span>${labelText}</span></div>`;
+            ? `<a href="${targetUrl}" target="_blank" rel="noopener noreferrer" class="${baseClass} ${typeDef.color} hover:brightness-95 active:scale-[0.98]">${iconHtml}<span>${escapedLabel}</span><span class="material-symbols-outlined text-base ml-auto opacity-50" aria-hidden="true">open_in_new</span></a>`
+            : `<div class="${baseClass} bg-black/5 dark:bg-white/5 text-slate-400 dark:text-slate-600 pointer-events-none line-through" title="除外済のため閲覧できません">${iconHtml}<span>${escapedLabel}</span></div>`;
         }).join('');
       }
 
@@ -1054,29 +1080,38 @@
           : 'bg-slate-400 dark:bg-slate-600';
         const statusText = isAssetActive ? '稼働中' : '台帳から除外済';
 
+        const escapedCat = utils.escapeHtml(a.catName || a.cat || '未分類');
+        const escapedLoc = utils.escapeHtml(a.locName || a.loc || '未定');
+        const escapedName = utils.escapeHtml(a.name || '名称未設定');
+        const escapedMaker = utils.escapeHtml(a.maker || 'Unknown');
+        const escapedModel = utils.escapeHtml(a.model || 'N/A');
+        const escapedId = utils.escapeHtml(a.id || 'N/A');
+        const escapedStatus = utils.escapeHtml(statusText);
+        const escapedDate = utils.escapeHtml(formattedDate);
+
         document.getElementById('detail-sheet-content').innerHTML = `
           <div class="flex items-center gap-2 mb-2">
-            <span class="w-2.5 h-2.5 rounded-full shrink-0 ${lampClass}" title="${statusText}"></span>
-            <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-black/5 dark:bg-white/10 text-slate-800 dark:text-slate-200 tracking-wider">${a.catName || a.cat || '未分類'}</span>
-            <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-black/5 dark:bg-white/10 text-slate-800 dark:text-slate-200 tracking-wider">${a.locName || a.loc || '未定'}</span>
+            <span class="w-2.5 h-2.5 rounded-full shrink-0 ${lampClass}" title="${escapedStatus}"></span>
+            <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-black/5 dark:bg-white/10 text-slate-800 dark:text-slate-200 tracking-wider">${escapedCat}</span>
+            <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-black/5 dark:bg-white/10 text-slate-800 dark:text-slate-200 tracking-wider">${escapedLoc}</span>
           </div>
 
-          <h2 id="detail-sheet-title" class="text-lg font-black token-text-primary tracking-tight mb-1">${a.name || '名称未設定'}</h2>
+          <h2 id="detail-sheet-title" class="text-lg font-black token-text-primary tracking-tight mb-1">${escapedName}</h2>
 
           <div class="flex items-center min-w-0 text-sm font-bold token-text-secondary mb-4">
-            <span class="truncate">${a.maker || 'Unknown'}</span>
+            <span class="truncate">${escapedMaker}</span>
             <span class="text-slate-300 dark:text-slate-600 mx-1.5 shrink-0">|</span>
-            <span class="font-mono truncate">${a.model || 'N/A'}</span>
+            <span class="font-mono truncate">${escapedModel}</span>
           </div>
 
           <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-xs mb-5 pb-5 border-b border-slate-200/50 dark:border-white/5">
             <dt class="font-bold text-slate-400 dark:text-slate-500">資産ID</dt>
-            <dd class="font-mono font-bold token-text-secondary">${a.id || 'N/A'}</dd>
+            <dd class="font-mono font-bold token-text-secondary">${escapedId}</dd>
             <dt class="font-bold text-slate-400 dark:text-slate-500">状態</dt>
-            <dd class="font-bold token-text-secondary">${statusText}</dd>
+            <dd class="font-bold token-text-secondary">${escapedStatus}</dd>
             ${formattedDate ? `
             <dt class="font-bold text-slate-400 dark:text-slate-500">購入日</dt>
-            <dd class="font-bold token-text-secondary">${formattedDate}</dd>` : ''}
+            <dd class="font-bold token-text-secondary">${escapedDate}</dd>` : ''}
           </dl>
 
           <div class="flex flex-col gap-2">
@@ -1090,9 +1125,10 @@
 
       function renderEmptyState(message) {
         const listContainer = document.getElementById('asset-list');
+        const escapedMsg = utils.escapeHtml(message);
         listContainer.innerHTML = `
           <div class="col-span-full bg-white dark:bg-[#1e1f20] p-10 text-center text-sm font-bold text-slate-600 dark:text-slate-300 rounded-[24px] border border-slate-200/20 dark:border-white/5">
-            ${message}
+            ${escapedMsg}
           </div>
         `;
         listContainer.setAttribute('aria-busy', 'false');

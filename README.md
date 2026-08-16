@@ -32,7 +32,7 @@ INBOXフォルダにPDFを投入すると、Gemini APIが内容を解析し、
 3. src/ 配下のファイルをGASプロジェクトへ反映する（以下いずれか）
    - GASエディタに直接配置（手動コピペ）
    - [clasp](https://github.com/google/clasp) でpush（`.devcontainer/` に開発環境あり。下記参照）
-4. Gemini API キーを Config シートに設定
+4. Gemini API キーを設定（推奨：GASエディタのプロジェクト設定 → スクリプト プロパティに `GEMINI_API_KEY` を登録。または Config シートに設定）
 5. WebApp としてデプロイ（`webapp.executeAs` は `USER_ACCESSING`。詳細は `docs/ARCHITECTURE.md` 2.2節）
 
 ## GAS開発環境（clasp）

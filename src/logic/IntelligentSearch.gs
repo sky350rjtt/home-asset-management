@@ -12,6 +12,9 @@
  * @returns {Object[]}   - AIおすすめ順に並び替えられた資産データの配列
  */
 function EXCLUSIVE_AI_VECTOR_SEARCH_ENTRANCE(query) {
+  if (typeof _assertAllowedUser === 'function') {
+    _assertAllowedUser();
+  }
   return AiSearchNamespace.execute(query);
 }
 

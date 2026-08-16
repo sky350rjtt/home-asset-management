@@ -33,8 +33,19 @@ const Config = (() => {
       sheet.getRange(1, 1, lastRow, 2).getValues()
         .forEach(([k, v]) => { if (k) raw[String(k).trim()] = v; });
  
+      // 【APIキーの安全な調達（ハイブリッド方式）】
+      // 1. スクリプトプロパティ（PropertiesService）にあれば最優先（シート閲覧者にキーを見せない安全な設定）
+      // 2. 未設定なら従来のConfigシートの値にフォールバック（後方互換性を維持）
+      let scriptPropApiKey = null;
+      try {
+        scriptPropApiKey = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
+      } catch(e) {
+        console.warn(`[Config] スクリプトプロパティ取得スキップ: ${e.message}`);
+      }
+      const geminiApiKey = String(scriptPropApiKey || raw['GEMINI_API_KEY'] || '').trim();
+
       _cache = {
-        GEMINI_API_KEY:       String(raw['GEMINI_API_KEY']       || ''),
+        GEMINI_API_KEY:       geminiApiKey,
         GEMINI_MODEL:         String(raw['GEMINI_MODEL']         || ''),
         GEMINI_EMBED_MODEL:   String(raw['GEMINI_EMBED_MODEL']   || ''),
         // 【次元数の明示固定】Configシートの GEMINI_EMBED_DIMENSION 行が唯一の真実源。
@@ -66,11 +77,17 @@ const Config = (() => {
           ? parseFloat(raw['GEMINI_SEARCH_MIN_SCORE'])
           : 0,
       };
- 
+
       const missing = ['GEMINI_API_KEY', 'INBOX_FOLDER_ID', 'DOCS_FOLDER_ID', 'UNRESOLVED_FOLDER_ID']
         .filter(k => !_cache[k]);
-      if (missing.length) throw new Error(`Configシートの必須項目が未入力です：${missing.join(', ')}`);
- 
+      if (missing.length) {
+        let msg = `Configの必須項目が未入力です：${missing.join(', ')}`;
+        if (missing.includes('GEMINI_API_KEY')) {
+          msg += '（※GEMINI_API_KEYはスクリプトプロパティまたはConfigシートに設定してください）';
+        }
+        throw new Error(msg);
+      }
+
       return _cache;
     },
  

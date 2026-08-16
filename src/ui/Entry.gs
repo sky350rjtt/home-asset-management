@@ -72,6 +72,26 @@ function doGet(e) {
 }
 
 /**
+ * 閲覧権限があるか検証し、なければ例外を投げる。
+ */
+function _assertAllowedUser() {
+  const email = (Session.getActiveUser().getEmail() || '').toLowerCase();
+  if (!_isAllowedUser(email)) {
+    throw new Error('アクセス権限がありません。');
+  }
+}
+
+/**
+ * 管理者権限があるか検証し、なければ例外を投げる。
+ */
+function _assertAdminUser() {
+  const role = getCurrentUserRole();
+  if (role !== 'admin') {
+    throw new Error('この操作には管理者権限（ADMIN_EMAILS）が必要です。');
+  }
+}
+
+/**
  * 閲覧画面（Viewer）の初期表示用。※AI検索は EXCLUSIVE_AI_VECTOR_SEARCH_ENTRANCE が担当。
  * 台帳の読み込み・見せ方への整形は shared/AssetPresenter.gs に委譲する
  * （logic/IntelligentSearch.gs と共用の部品。UI層・ロジック層のどちらからも対等に依存できる
@@ -79,6 +99,7 @@ function doGet(e) {
  * ここでは軽量化のためベクトル（T列）を外して返す。
  */
 function getAssetStorageData() {
+  _assertAllowedUser();
   try {
     return AssetPresenter.loadFromLedger(false);
   } catch (e) {
@@ -94,6 +115,7 @@ function getAssetStorageData() {
  * Configの行を増減しても壊れないようにしている（getModelSettingsと同じ探し方）。
  */
 function _writeConfigValue(key, value) {
+  _assertAdminUser();
   const sheet   = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(Constants.SHEET.CONFIG);
   const lastRow = sheet.getLastRow();
   const keys    = sheet.getRange(1, 1, lastRow, 1).getValues();
@@ -107,7 +129,12 @@ function _writeConfigValue(key, value) {
 }
 
 function runScanFromUI(selectedModel) {
+  _assertAdminUser();
   if (selectedModel) {
+    const settings = getModelSettings();
+    if (!settings.models.includes(selectedModel)) {
+      throw new Error(`指定されたAIモデル「${selectedModel}」はConfigシートの選択肢に存在しません。`);
+    }
     _writeConfigValue(Constants.CONFIG_KEY.GEMINI_MODEL, selectedModel);
 
     if (typeof Config !== 'undefined' && Config.clear) {
@@ -128,6 +155,7 @@ function runScanFromUI(selectedModel) {
  *   「わからないから適当な値で動かす」のではなく「わからないから止める」を徹底する。
  */
 function getModelSettings() {
+  _assertAllowedUser();
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(Constants.SHEET.CONFIG);
   const lastRow = sheet.getLastRow();

@@ -210,15 +210,23 @@ v20を現行稼働バージョンとして固定した後の変更は、バー�
      実行される方式に変わるため、閲覧者を含む全利用者に対して台帳スプレッドシートの共有権限（最低限
      Viewer）を個別付与する運用が必要になった（詳細は`ARCHITECTURE.md` 2.2節）。
 
-### 2026-08-14（2）
+### 2026-08-16
 
-GAS開発環境をdevcontainer化。`.devcontainer/devcontainer.json`（Node.js 20 + clasp）、
-`package.json`（`@google/clasp`, `@types/google-apps-script`）、`.clasp.json`（`rootDir: "."`）、
-`.claspignore`（`.gs`/`.js`/`.html`/`appsscript.json`のみpush対象）、`jsconfig.json`
-（`.gs`ファイルへのGAS組込サービスの型補完用）を新規追加。これまでGASエディタへの手動コピペで
-運用していたコード反映を、`clasp push`/`pull`で行えるようにした（README.mdの「GAS開発環境」節に
-手順を記載）。`.clasp.json`の`scriptId`はプレースホルダのままコミットしており、利用時に
-実際のスクリプトIDへの置き換えが必要。
+敵対的レビュー（Adversarial Review）の結果に基づく、包括的なセキュリティ・信頼性・データ整合性向上リファクタリングを実施。
+
+1. **APIキーのスクリプトプロパティ取得対応**（`config/Config.gs`）
+   - `PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY')` を最優先で読み込み、未設定時は従来のConfigシートの値をフォールバックとして参照するハイブリッド構成に変更。
+   - スプレッドシート共有時にConfigシート上の生APIキーが他者に露出するリスクを解消（スクリプトプロパティ設定により完全隠蔽可能）。
+2. **サーバー側RPCエンドポイントの認可ガード強化**（`ui/Entry.gs`, `logic/IntelligentSearch.gs`）
+   - `runScanFromUI()`、`_writeConfigValue()` に `_assertAdminUser()` ガードを追加（管理者以外の勝手なスキャン実行・モデル改変を防止）。モデル名のホワイトリスト検証も追加。
+   - `getAssetStorageData()`、`EXCLUSIVE_AI_VECTOR_SEARCH_ENTRANCE()`、`getModelSettings()` に `_assertAllowedUser()` ガードを追加。
+3. **GAS実行時間ガード（4分安全上限）の導入**（`logic/Scanner.gs`）
+   - 大量ファイル投入時にGASの実行時間上限（6分）で強制中断されるのを防ぐため、4分（240秒）経過時点で安全にループを抜け、残りを次回スキャンに持ち越す安全脱出機構を導入。
+4. **新規資産登録のアトミック化とロールバック対応**（`logic/Location.gs`, `dao/AssetMasterDAO.gs`）
+   - `AssetMasterDAO.deleteRow()` を新設。
+   - `Location.gs` において、全ファイルのリネーム・移動が完了してから台帳へ一括 `insert()` を行い、失敗時はロールバックする設計に改修。1ファイルごとの個別 `appendFileId` を廃止し、セルI/Oを劇的に削減。
+5. **フロントエンドのXSSサニタイズ強化**（`ui/index_viewer.html`, `ui/Index.html`）
+   - `utils.escapeHtml()` および `utils.safeUrl()` を導入し、動的HTML展開（`buildInfoHtml`, `buildButtonsHtml`, `openDetailSheet`, `renderEmptyState` 等）の全箇所をサニタイズ。
 
 ---
 

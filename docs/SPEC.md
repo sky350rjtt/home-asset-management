@@ -69,7 +69,7 @@ src/
 
 | キー | 必須 | 説明 |
 |---|---|---|
-| `GEMINI_API_KEY` | ✅必須 | Gemini API キー |
+| `GEMINI_API_KEY` | ✅必須 | Gemini API キー。**スクリプトプロパティ（`PropertiesService`）の値を最優先**で読み込み、未設定時はConfigシートの値を参照するハイブリッド構成。シート閲覧者にAPIキーを見せないための安全策としてスクリプトプロパティ設定を推奨 |
 | `INBOX_FOLDER_ID` | ✅必須 | 投入用フォルダのID |
 | `DOCS_FOLDER_ID` | ✅必須 | 処理済みファイルの移動先フォルダID |
 | `UNRESOLVED_FOLDER_ID` | ✅必須 | エラー隔離フォルダID |
@@ -79,8 +79,9 @@ src/
 | `ASSET_MASTER_ID` | 任意（空文字許容） | 台帳スプレッドシートのID。未設定時はアクティブなスプレッドシート自身を台帳として使う（`AssetMasterDAO._getSheet`） |
 | `GEMINI_SEARCH_MIN_SCORE` | 任意 | 検索結果の足切りスコア閾値。未設定時は `0`（足切りしない）。**「適切な閾値」はコードが決め打ちすべきものではない**という方針でConfigシート側に置く |
 | `ADMIN_EMAILS` | 任意（空文字許容） | 管理者のGoogleアカウントのメールアドレスをカンマ区切りで1セルに記入する（例: `taro@gmail.com,hanako@gmail.com`）。`Entry.gs`の`getCurrentUserRole()`がUIの出し分け（登録FABの表示可否）にのみ使用する。未設定でもエラーにせず、空配列として扱われる（fail-fastの対象外。閲覧機能自体はこれが無くても成立するため） |
+| `ALLOWED_EMAILS` | 任意（空文字許容） | 閲覧を許可するメールアドレス一覧（カンマ区切り）。`ADMIN_EMAILS` のユーザーは暗黙に閲覧も許可される |
 
-必須4項目（`GEMINI_API_KEY` / `INBOX_FOLDER_ID` / `DOCS_FOLDER_ID` / `UNRESOLVED_FOLDER_ID`）のいずれかが空なら
+必須4項目（`GEMINI_API_KEY`（スクリプトプロパティまたはConfigシート） / `INBOX_FOLDER_ID` / `DOCS_FOLDER_ID` / `UNRESOLVED_FOLDER_ID`）のいずれかが空なら
 `Config.load()` の時点でエラーになる（fail-fast）。
 
 ### 3.2 Masters シート（`MastersDAO.gs`）

@@ -129,15 +129,20 @@
       }
 
       function renderResults(result) {
+        const newCount = Number(result && result.newCount) || 0;
+        const mergedCount = Number(result && result.mergedCount) || 0;
+        const errorCount = Number(result && result.errorCount) || 0;
+        const heicCount = Number(result && result.heicCount) || 0;
+
         DOM.resContent.innerHTML = `
-          <div class="flex justify-between"><span>✨ 新規資産登録:</span> <span class="font-bold text-slate-800 dark:text-slate-200">${result.newCount || 0} 件</span></div>
-          <div class="flex justify-between"><span>📎 既存書類追加:</span> <span class="font-bold text-slate-800 dark:text-slate-200">${result.mergedCount || 0} 件</span></div>
-          <div class="flex justify-between text-rose-600 dark:text-rose-400"><span>🚨 処理エラー隔離:</span> <span class="font-bold">${result.errorCount || 0} 件</span></div>
+          <div class="flex justify-between"><span>✨ 新規資産登録:</span> <span class="font-bold text-slate-800 dark:text-slate-200">${newCount} 件</span></div>
+          <div class="flex justify-between"><span>📎 既存書類追加:</span> <span class="font-bold text-slate-800 dark:text-slate-200">${mergedCount} 件</span></div>
+          <div class="flex justify-between text-rose-600 dark:text-rose-400"><span>🚨 処理エラー隔離:</span> <span class="font-bold">${errorCount} 件</span></div>
         `;
         
-        if (result.heicCount > 0) {
+        if (heicCount > 0) {
           DOM.heicWarning.innerHTML = `
-            ⚠️ <b>HEIC形式の画像が ${result.heicCount} 件スキップされました。</b><br>
+            ⚠️ <b>HEIC形式の画像が ${heicCount} 件スキップされました。</b><br>
             iPhoneの「設定 → カメラ → フォーマット」を「互換性優先」に変更してください。
           `;
           DOM.heicWarning.classList.remove('hidden');

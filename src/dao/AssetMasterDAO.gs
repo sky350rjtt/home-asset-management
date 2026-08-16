@@ -121,7 +121,15 @@ const AssetMasterDAO = (() => {
       row[COL.PURCHASE_PRICE - 1] = data.purchasePrice  || '';
       row[COL.PURCHASE_STORE - 1] = data.purchaseStore  || '';
       row[COL.WARRANTY_EXP - 1]   = data.warrantyExpiry || '';
-      // N列（廃棄日）は空欄のまま＝稼働中。書類IDは後段のappendFileId()が入れるため、ここでは触らない。
+      // 書類ID（O〜R列）が渡されていればセット
+      if (data.docIds) {
+        if (data.docIds.MNL) row[COL.MNL - 1] = data.docIds.MNL;
+        if (data.docIds.RCP) row[COL.RCP - 1] = data.docIds.RCP;
+        if (data.docIds.WRT) row[COL.WRT - 1] = data.docIds.WRT;
+        if (data.docIds.OTH) row[COL.OTH - 1] = data.docIds.OTH;
+      }
+
+      // N列（廃棄日）は空欄のまま＝稼働中
       row[COL.REMARKS - 1]        = data.remarks        || '';
       
       // embeddingは業務ロジック層で生成済みの値をそのまま受け取り、加工せずT列に書き込む
@@ -129,6 +137,15 @@ const AssetMasterDAO = (() => {
  
       sheet.appendRow(row);
       return sheet.getLastRow(); 
+    },
+
+    /**
+     * エラー時のロールバック用：指定行を台帳から削除する
+     */
+    deleteRow(assetMasterId, row) {
+      if (!row || row < 2) return;
+      const sheet = _getSheet(assetMasterId);
+      sheet.deleteRow(row);
     },
 
     /**
