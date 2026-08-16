@@ -25,8 +25,36 @@ function scanAndExecute() {
   Scanner.run();
 }
 
+/**
+ * カンマ区切りのメールアドレス一覧文字列を、正規化済み配列に変換する。
+ * ADMIN_EMAILS・ALLOWED_EMAILSの両方で同じ形式なので共通化。
+ */
+function _parseEmailList(raw) {
+  return (raw || '')
+    .split(',')
+    .map(s => s.trim().toLowerCase())
+    .filter(s => s);
+}
+
+/**
+ * このユーザーにWebアプリの中身を見せてよいか判定する。
+ * ALLOWED_EMAILSに載っているか、ADMIN_EMAILSに載っていれば許可
+ *（管理者はALLOWED_EMAILSへの二重登録不要）。
+ */
+function _isAllowedUser(email) {
+  const config = Config.load();
+  const allowed = _parseEmailList(config.ALLOWED_EMAILS);
+  const admins  = _parseEmailList(config.ADMIN_EMAILS);
+  return allowed.includes(email) || admins.includes(email);
+}
+
 function doGet(e) {
-  const page = e && e.parameter && e.parameter.p;
+  const page  = e && e.parameter && e.parameter.p;
+  const email = (Session.getActiveUser().getEmail() || '').toLowerCase();
+
+  if (!_isAllowedUser(email)) {
+    return HtmlService.createHtmlOutput('アクセス権限がありません。');
+  }
 
   // 【メインURLの切り替え】日常利用はViewer(閲覧+管理者のみ登録)をメインに変更。
   //   旧メイン画面のIndex(AIスキャナー専用)は ?p=admin の予備URLとして残す。
@@ -149,11 +177,7 @@ function getModelSettings() {
  */
 function getCurrentUserRole() {
   const email = (Session.getActiveUser().getEmail() || '').toLowerCase();
-  const config = Config.load();
-  const adminEmails = (config.ADMIN_EMAILS || '')
-    .split(',')
-    .map(s => s.trim().toLowerCase())
-    .filter(s => s);
+  const adminEmails = _parseEmailList(Config.load().ADMIN_EMAILS);
   return adminEmails.includes(email) ? 'admin' : 'viewer';
 }
 
