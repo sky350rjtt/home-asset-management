@@ -98,6 +98,48 @@
           padding-top: calc(1rem + env(safe-area-inset-top)) !important;
         }
       }
+
+      /* レスポンシブモーダル（モバイル: ボトムシート / PC: 中央ポップアップ） */
+      .app-sheet {
+        position: fixed;
+        z-index: 50;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+      }
+
+      /* モバイル（画面下部からスライドイン、スワイプダウンで閉じる） */
+      @media (max-width: 767px) {
+        .app-sheet {
+          left: 0;
+          right: 0;
+          bottom: 0;
+          border-top-left-radius: 24px;
+          border-top-right-radius: 24px;
+          transform: translateY(100%);
+        }
+        .app-sheet.is-open {
+          transform: translateY(0);
+        }
+      }
+
+      /* デスクトップ（画面中央にフワッとポップアップ、視界のバランスを最適化） */
+      @media (min-width: 768px) {
+        .app-sheet {
+          top: 50%;
+          left: 50%;
+          width: 100%;
+          max-width: 32rem; /* max-w-lg */
+          border-radius: 24px;
+          transform: translate(-50%, -46%) scale(0.96);
+          opacity: 0;
+          pointer-events: none;
+        }
+        .app-sheet.is-open {
+          transform: translate(-50%, -50%) scale(1);
+          opacity: 1;
+          pointer-events: auto;
+        }
+      }
     </style>
   </head>
   <!-- body の背景色はTailwindの標準的なdark:クラスでOS設定に追従させる -->
@@ -140,7 +182,7 @@
           <div class="absolute inset-y-0 left-5 flex items-center pointer-events-none text-slate-400 dark:text-slate-500 text-lg" aria-hidden="true"><span class="material-symbols-outlined">search</span></div>
           <!-- ショートカットヒント：消えるプレースホルダーに依存せず、常設のkbd要素として表示（業界標準パターン） -->
           <kbd id="search-kbd-hint" aria-hidden="true" class="hidden lg:flex items-center justify-center absolute right-[7.25rem] h-5 min-w-5 px-1 text-[10px] font-mono font-bold text-slate-400 dark:text-slate-500 border border-slate-300 dark:border-slate-600 rounded pointer-events-none transition-opacity duration-150">/</kbd>
-          <button id="clear-btn" onclick="clearSearch()" aria-label="検索条件をクリア" class="hidden absolute right-[6.25rem] w-7 h-7 items-center justify-center text-slate-400 dark:text-slate-400 text-lg font-medium hover:text-slate-600 dark:hover:text-slate-200 transition-all cursor-pointer">
+          <button id="clear-btn" onclick="clearSearch()" aria-label="検索条件をクリア" class="hidden absolute right-[6.1rem] w-8 h-8 flex items-center justify-center text-slate-400 dark:text-slate-400 text-lg font-medium hover:text-slate-600 dark:hover:text-slate-200 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all cursor-pointer">
             <span aria-hidden="true">×</span>
           </button>
 
@@ -165,20 +207,32 @@
         <div id="active-filter-tags" class="hidden flex-wrap gap-1.5 items-center" role="status" aria-label="適用中のフィルター"></div>
       </search>
 
-      <!-- ソート・フィルターのボトムシート（Notionの選択パネルを参考にした構成） -->
-      <div id="sheet-backdrop" onclick="closeSheet()" class="hidden fixed inset-0 bg-black/40 z-40 opacity-0 transition-opacity duration-200"></div>
+      <!-- ソート・フィルター・登録・詳細のレスポンシブモーダル（モバイル: ボトムシート / PC: 中央ダイアログ） -->
+      <div id="sheet-backdrop" onclick="closeSheet()" class="hidden fixed inset-0 bg-black/50 backdrop-blur-xs z-40 opacity-0 transition-opacity duration-200 cursor-pointer"></div>
 
+      <!-- ソートシート -->
       <div id="sort-sheet" role="dialog" aria-modal="true" aria-labelledby="sort-sheet-title"
-        class="hidden fixed inset-x-0 bottom-0 z-50 bg-white dark:bg-[#1e1f20] rounded-t-[24px] p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-2xl translate-y-full transition-transform duration-250 max-w-lg mx-auto">
-        <div class="w-9 h-1 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto mb-4" aria-hidden="true"></div>
-        <h2 id="sort-sheet-title" class="text-sm font-bold text-slate-900 dark:text-slate-100 px-1 mb-3">並び替え</h2>
+        class="hidden app-sheet bg-white dark:bg-[#1e1f20] p-5 md:p-6 pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
+        <div class="sheet-drag-handle w-10 h-1.2 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto mb-4 md:hidden cursor-grab active:cursor-grabbing" aria-label="下にスワイプして閉じる"></div>
+        <div class="flex items-center justify-between mb-3 px-1">
+          <h2 id="sort-sheet-title" class="text-sm font-bold text-slate-900 dark:text-slate-100">並び替え</h2>
+          <button onclick="closeSheet()" aria-label="閉じる" class="hidden md:flex w-7 h-7 items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full cursor-pointer">
+            <span class="material-symbols-outlined text-lg" aria-hidden="true">close</span>
+          </button>
+        </div>
         <div id="sort-options" class="flex flex-col gap-1"></div>
       </div>
 
+      <!-- フィルターシート -->
       <div id="filter-sheet" role="dialog" aria-modal="true" aria-labelledby="filter-sheet-title"
-        class="hidden fixed inset-x-0 bottom-0 z-50 bg-white dark:bg-[#1e1f20] rounded-t-[24px] p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-2xl translate-y-full transition-transform duration-250 max-w-lg mx-auto max-h-[80vh] overflow-y-auto overflow-x-hidden">
-        <div class="w-9 h-1 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto mb-4" aria-hidden="true"></div>
-        <h2 id="filter-sheet-title" class="text-sm font-bold text-slate-900 dark:text-slate-100 px-1 mb-4">絞り込み</h2>
+        class="hidden app-sheet bg-white dark:bg-[#1e1f20] p-5 md:p-6 pb-[calc(1.25rem+env(safe-area-inset-bottom))] max-h-[85vh] md:max-h-[80vh] overflow-y-auto overflow-x-hidden">
+        <div class="sheet-drag-handle w-10 h-1.2 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto mb-4 md:hidden cursor-grab active:cursor-grabbing" aria-label="下にスワイプして閉じる"></div>
+        <div class="flex items-center justify-between mb-4 px-1">
+          <h2 id="filter-sheet-title" class="text-sm font-bold text-slate-900 dark:text-slate-100">絞り込み</h2>
+          <button onclick="closeSheet()" aria-label="閉じる" class="hidden md:flex w-7 h-7 items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full cursor-pointer">
+            <span class="material-symbols-outlined text-lg" aria-hidden="true">close</span>
+          </button>
+        </div>
 
         <fieldset class="flex flex-col gap-2 border-none p-0 m-0 mb-4 min-w-0">
           <legend class="flex items-center gap-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider ml-1 p-0"><span class="material-symbols-outlined text-sm" aria-hidden="true">home_pin</span>ロケーション</legend>
@@ -196,19 +250,21 @@
           </label>
         </div>
 
-        <button onclick="closeSheet()" class="w-full mt-4 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-full text-sm font-bold cursor-pointer">
+        <button onclick="closeSheet()" class="w-full mt-4 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-full text-sm font-bold cursor-pointer hover:brightness-95 active:scale-[0.98] transition-all">
           閉じる
         </button>
       </div>
 
-      <!-- スキャン実行シート：旧Index.html(独立ページ)の機能をボトムシートに統合したもの。
-           管理者のみがアクセスできる導線(画面下部中央のFAB、add-asset-link)からのみ開く。
-           内容は「AIモデル選択」「スキャン実行ボタン」「実行結果レポート」の3点のみで、
-           独立ページとして持つ必要のあるボリュームではないため、この形に統合した。 -->
+      <!-- スキャン実行シート -->
       <div id="scan-sheet" role="dialog" aria-modal="true" aria-labelledby="scan-sheet-title"
-        class="hidden fixed inset-x-0 bottom-0 z-50 bg-white dark:bg-[#1e1f20] rounded-t-[24px] p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-2xl translate-y-full transition-transform duration-250 max-w-lg mx-auto max-h-[85vh] overflow-y-auto overflow-x-hidden">
-        <div class="w-9 h-1 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto mb-4" aria-hidden="true"></div>
-        <h2 id="scan-sheet-title" class="text-sm font-bold text-slate-900 dark:text-slate-100 px-1 mb-1">家電を登録する</h2>
+        class="hidden app-sheet bg-white dark:bg-[#1e1f20] p-5 md:p-6 pb-[calc(1.25rem+env(safe-area-inset-bottom))] max-h-[85vh] md:max-h-[80vh] overflow-y-auto overflow-x-hidden">
+        <div class="sheet-drag-handle w-10 h-1.2 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto mb-4 md:hidden cursor-grab active:cursor-grabbing" aria-label="下にスワイプして閉じる"></div>
+        <div class="flex items-center justify-between mb-1 px-1">
+          <h2 id="scan-sheet-title" class="text-sm font-bold text-slate-900 dark:text-slate-100">家電を登録する</h2>
+          <button onclick="closeSheet()" aria-label="閉じる" class="hidden md:flex w-7 h-7 items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full cursor-pointer">
+            <span class="material-symbols-outlined text-lg" aria-hidden="true">close</span>
+          </button>
+        </div>
         <p class="text-xs text-slate-500 dark:text-slate-400 px-1 mb-4">INBOXフォルダに投入済みの書類を、Geminiが解析して台帳に登録します。</p>
 
         <fieldset class="flex flex-col gap-2 border-none p-0 m-0 mb-4">
@@ -218,7 +274,7 @@
           </select>
         </fieldset>
 
-        <!-- 実行結果レポート：スキャン完了後にここへ件数・警告を差し込む。既定は非表示 -->
+        <!-- 実行結果レポート -->
         <div id="scan-result-report" class="hidden mb-4 p-4 bg-[#f8f9fa] dark:bg-[#282a2c] rounded-xl text-xs text-slate-700 dark:text-slate-300 space-y-1" role="status" aria-live="polite"></div>
 
         <button id="scan-execute-btn" onclick="executeScan()"
@@ -227,21 +283,22 @@
           <span id="scan-execute-label">スキャン実行</span>
         </button>
 
-        <button onclick="closeSheet()" class="w-full mt-2 py-3 text-slate-500 dark:text-slate-400 rounded-full text-sm font-bold cursor-pointer">
+        <button onclick="closeSheet()" class="w-full mt-2 py-3 text-slate-500 dark:text-slate-400 rounded-full text-sm font-bold cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-all">
           閉じる
         </button>
       </div>
 
-      <!-- 資産の詳細シート：一覧カードをタップすると開く。
-           一覧は「探す」ための情報だけに絞り、「見つけた後に使う情報」
-           (ID・拠点・購入日・書類ボタン)はすべてここに集約する。
-           書類ボタンを縦に並べられるため、横スクロール・フェード・件数バッジといった
-           一覧側で必要だった補助表示が、構造的に不要になる。 -->
+      <!-- 資産の詳細シート -->
       <div id="detail-sheet" role="dialog" aria-modal="true" aria-labelledby="detail-sheet-title"
-        class="hidden fixed inset-x-0 bottom-0 z-50 bg-white dark:bg-[#1e1f20] rounded-t-[24px] p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-2xl translate-y-full transition-transform duration-250 max-w-lg mx-auto max-h-[85vh] overflow-y-auto overflow-x-hidden">
-        <div class="w-9 h-1 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto mb-4" aria-hidden="true"></div>
+        class="hidden app-sheet bg-white dark:bg-[#1e1f20] p-5 md:p-6 pb-[calc(1.25rem+env(safe-area-inset-bottom))] max-h-[85vh] md:max-h-[80vh] overflow-y-auto overflow-x-hidden">
+        <div class="sheet-drag-handle w-10 h-1.2 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto mb-4 md:hidden cursor-grab active:cursor-grabbing" aria-label="下にスワイプして閉じる"></div>
+        <div class="flex items-center justify-end md:mb-1">
+          <button onclick="closeSheet()" aria-label="閉じる" class="hidden md:flex w-7 h-7 items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full cursor-pointer">
+            <span class="material-symbols-outlined text-lg" aria-hidden="true">close</span>
+          </button>
+        </div>
         <div id="detail-sheet-content"></div>
-        <button onclick="closeSheet()" class="w-full mt-4 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-full text-sm font-bold cursor-pointer">
+        <button onclick="closeSheet()" class="w-full mt-4 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-full text-sm font-bold cursor-pointer hover:brightness-95 active:scale-[0.98] transition-all">
           閉じる
         </button>
       </div>
@@ -463,6 +520,7 @@
         buildChips('location-chips', 'loc', 'locName', (code, name) => { activeLocation = code; activeLocationName = name; });
         buildChips('category-chips', 'cat', 'catName', (code, name) => { activeCategory = code; activeCategoryName = name; });
         renderSortOptions(SORT_OPTIONS_DEFAULT);
+        initSwipeToClose();
         applyFiltersAndRender();
       }
 
@@ -569,75 +627,109 @@
       };
 
       window.openSheet = function(kind) {
-        const { sheetId, btnId } = SHEET_CONFIG[kind];
+        const config = SHEET_CONFIG[kind];
+        if (!config) return;
+        const { sheetId, btnId } = config;
         const sheet = document.getElementById(sheetId);
         const backdrop = document.getElementById('sheet-backdrop');
-        const triggerBtn = document.getElementById(btnId);
+        const triggerBtn = btnId ? document.getElementById(btnId) : null;
 
         backdrop.classList.remove('hidden');
-        // 1フレーム後にtransitionを効かせるため、rAFでopacity切り替えを遅延させる
-        requestAnimationFrame(() => backdrop.classList.add('opacity-100'));
-
         sheet.classList.remove('hidden');
-        requestAnimationFrame(() => sheet.classList.remove('translate-y-full'));
 
-        // 詳細シートのようにトリガーボタンを持たないシートもあるため、存在チェックを挟む
+        // 1フレーム後に transition を効かせる
+        requestAnimationFrame(() => {
+          backdrop.classList.add('opacity-100');
+          sheet.classList.add('is-open');
+        });
+
         if (triggerBtn) triggerBtn.setAttribute('aria-expanded', 'true');
         activeSheetId = sheetId;
 
-        // ★追加：シート表示中は、背後の2つのFAB(登録・トップに戻る)を隠す。
-        //   隠さないと、シートより手前にタップ可能なまま残り、
-        //   モーダルとしての没入感が壊れる/誤操作でシートが多重に開こうとする問題があった。
+        // 背後のFABを隠す
         const addBtn = document.getElementById('add-asset-link');
         const topBtn = document.getElementById('to-top-btn');
         if (addBtn && !addBtn.classList.contains('hidden')) addBtn.classList.replace('flex', 'hidden');
         if (topBtn) topBtn.classList.add('pointer-events-none', '!opacity-0');
 
-        // ★追加：背景のスクロールをロックする(標準的なモーダルの作法)。
-        //   ロックしないと、シートの裏で背景がスクロールでき、
-        //   scrollイベントリスナーが発火して pointer-events-none が
-        //   勝手に解除される(=見た目は隠れているのに裏で押せてしまう)
-        //   アクセシビリティ上の問題が起きるため。
         document.body.style.overflow = 'hidden';
 
-        // scanシートは開いた瞬間にモデル一覧を遅延読み込みする(常時ロードしない)。
-        // 管理者以外はこのボタン自体が表示されないため、余計なgoogle.script.run呼び出しを避けられる。
         if (kind === 'scan') loadScanModelOptions();
 
-        // フォーカスをシート内に移す(モーダルとしての基本挙動)
-        const firstFocusable = sheet.querySelector('button, input, [tabindex]');
+        const firstFocusable = sheet.querySelector('button, input, select, [tabindex]');
         if (firstFocusable) firstFocusable.focus();
-      }
+      };
 
       window.closeSheet = function() {
         if (!activeSheetId) return;
         const sheet = document.getElementById(activeSheetId);
         const backdrop = document.getElementById('sheet-backdrop');
         const kind = Object.keys(SHEET_CONFIG).find(k => SHEET_CONFIG[k].sheetId === activeSheetId);
-        const triggerBtn = document.getElementById(SHEET_CONFIG[kind].btnId);
+        const triggerBtn = (kind && SHEET_CONFIG[kind].btnId) ? document.getElementById(SHEET_CONFIG[kind].btnId) : null;
 
-        sheet.classList.add('translate-y-full');
+        sheet.classList.remove('is-open');
+        sheet.style.transform = ''; // スワイプ途中のインラインスタイルをリセット
         backdrop.classList.remove('opacity-100');
         if (triggerBtn) triggerBtn.setAttribute('aria-expanded', 'false');
 
-        // ★追加：シートを閉じたら、隠していた2つのFABを元の状態に復元する。
-        //   登録FABは「isAdmin(実際の権限)」を見て復元する(無条件に表示すると、
-        //   閲覧者でも一度シートを開閉しただけでボタンが出現してしまう事故を防ぐ)。
-        //   トップに戻るボタンは、pointer-events/opacityの上書きを外すだけで、
-        //   スクロール位置に応じた本来の表示制御(window.addEventListener('scroll',...))に任せる。
         if (isAdmin) {
           document.getElementById('add-asset-link').classList.replace('hidden', 'flex');
         }
         document.getElementById('to-top-btn').classList.remove('pointer-events-none', '!opacity-0');
         document.body.style.overflow = '';
 
-        // transition完了後に非表示化(アニメーション途中で消えないように)
         setTimeout(() => {
           sheet.classList.add('hidden');
           backdrop.classList.add('hidden');
         }, 250);
 
         activeSheetId = null;
+      };
+
+      // ★追加：モバイルでのスワイプダウン（引き下げ）クローズの実装
+      function initSwipeToClose() {
+        const sheets = document.querySelectorAll('.app-sheet');
+        sheets.forEach(sheet => {
+          let startY = 0;
+          let currentY = 0;
+          let isDragging = false;
+
+          sheet.addEventListener('touchstart', (e) => {
+            // モバイル画面幅（767px以下）かつシート内スクロールが最上部のときのみドラッグ有効
+            if (window.innerWidth >= 768) return;
+            if (sheet.scrollTop > 0) return;
+
+            startY = e.touches[0].clientY;
+            isDragging = true;
+          }, { passive: true });
+
+          sheet.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            currentY = e.touches[0].clientY;
+            const deltaY = currentY - startY;
+
+            // 下方向へのドラッグのみ追従
+            if (deltaY > 0) {
+              sheet.style.transition = 'none';
+              sheet.style.transform = `translateY(${deltaY}px)`;
+            }
+          }, { passive: true });
+
+          sheet.addEventListener('touchend', () => {
+            if (!isDragging) return;
+            isDragging = false;
+            sheet.style.transition = '';
+
+            const deltaY = currentY - startY;
+            if (deltaY > 80) {
+              closeSheet();
+            } else {
+              sheet.style.transform = '';
+            }
+            startY = 0;
+            currentY = 0;
+          });
+        });
       }
 
       // ★追加：旧Index.htmlが持っていた「モデル一覧取得」「スキャン実行」ロジックを移植。
@@ -982,7 +1074,7 @@
           //   一覧は「探す情報」だけに絞り、詳細は専用シートに分離する。
           return `
             <button type="button" onclick="openDetailSheet(${idx})"
-              class="${cardBgColor} w-full text-left py-4 px-4 md:py-4.5 md:px-5 rounded-[24px] hover:brightness-95 dark:hover:brightness-110 flex flex-col gap-1 transition-all duration-200 cursor-pointer shadow-xs border border-slate-200/20 dark:border-white/5 ${opacityClass}">
+              class="${cardBgColor} group w-full text-left py-4 px-4 md:py-4.5 md:px-5 rounded-[24px] hover:brightness-95 dark:hover:brightness-110 active:scale-[0.99] flex items-center justify-between gap-3 transition-all duration-200 cursor-pointer shadow-xs border border-slate-200/20 dark:border-white/5 ${opacityClass}">
               ${buildInfoHtml(a, isAssetActive)}
             </button>
           `;
@@ -1018,21 +1110,23 @@
         const escapedModel = utils.escapeHtml(a.model || 'N/A');
 
         // ★大変更：一覧カードは「探すための情報」だけに絞る。
-        //   ID・拠点・購入日・書類ボタンは詳細シート(openDetailSheet)へ移動した。
-        //   これにより製品名が視覚的に最も強い要素になり、本来あるべき階層になる。
+        //   右端に控えめなchevronを配置して「タップして詳細が開く」アフォーダンスを直感的に伝達。
         return `
-          <div class="flex items-center gap-2 min-w-0 mb-1.5">
-            <span class="w-2.5 h-2.5 rounded-full shrink-0 ${lampClass}" title="${lampTitle}"></span>
-            <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-black/5 dark:bg-white/10 text-slate-800 dark:text-slate-200 tracking-wider">${escapedCat}</span>
-          </div>
+          <div class="min-w-0 flex-1 flex flex-col gap-1">
+            <div class="flex items-center gap-2 min-w-0 mb-0.5">
+              <span class="w-2.5 h-2.5 rounded-full shrink-0 ${lampClass}" title="${lampTitle}"></span>
+              <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-black/5 dark:bg-white/10 text-slate-800 dark:text-slate-200 tracking-wider">${escapedCat}</span>
+            </div>
 
-          <h2 class="text-base md:text-lg font-black ${titleTextClass} truncate tracking-tight mb-1">${escapedName}</h2>
+            <h2 class="text-base md:text-lg font-black ${titleTextClass} truncate tracking-tight mb-0.5">${escapedName}</h2>
 
-          <div class="flex items-center min-w-0 text-sm font-bold token-text-secondary">
-            <span class="truncate tracking-tight">${escapedMaker}</span>
-            <span class="text-slate-300 dark:text-slate-600 mx-1.5 shrink-0">|</span>
-            <span class="font-mono tracking-tight truncate font-bold">${escapedModel}</span>
+            <div class="flex items-center min-w-0 text-sm font-bold token-text-secondary">
+              <span class="truncate tracking-tight">${escapedMaker}</span>
+              <span class="text-slate-300 dark:text-slate-600 mx-1.5 shrink-0">|</span>
+              <span class="font-mono tracking-tight truncate font-bold">${escapedModel}</span>
+            </div>
           </div>
+          <span class="material-symbols-outlined text-slate-300 dark:text-slate-600 group-hover:text-slate-500 dark:group-hover:text-slate-300 group-hover:translate-x-0.5 shrink-0 text-2xl transition-all duration-150" aria-hidden="true">chevron_right</span>
         `;
       }
 
@@ -1126,9 +1220,22 @@
       function renderEmptyState(message) {
         const listContainer = document.getElementById('asset-list');
         const escapedMsg = utils.escapeHtml(message);
+        const searchInput = document.getElementById('search-input');
+        const hasFilterOrQuery = (searchInput && searchInput.value.trim().length > 0) ||
+                                 (activeLocation !== 'ALL') ||
+                                 (activeCategory !== 'ALL') ||
+                                 showDisposed ||
+                                 isAiResult;
+
         listContainer.innerHTML = `
-          <div class="col-span-full bg-white dark:bg-[#1e1f20] p-10 text-center text-sm font-bold text-slate-600 dark:text-slate-300 rounded-[24px] border border-slate-200/20 dark:border-white/5">
-            ${escapedMsg}
+          <div class="col-span-full bg-white dark:bg-[#1e1f20] p-8 md:p-10 text-center rounded-[24px] border border-slate-200/20 dark:border-white/5 flex flex-col items-center justify-center gap-3">
+            <span class="material-symbols-outlined text-3xl text-slate-400 dark:text-slate-500" aria-hidden="true">search_off</span>
+            <div class="text-sm font-bold text-slate-600 dark:text-slate-300 max-w-md">${escapedMsg}</div>
+            ${hasFilterOrQuery ? `
+              <button type="button" onclick="clearSearch()" class="mt-2 px-5 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-full text-xs font-bold hover:brightness-95 active:scale-95 transition-all cursor-pointer shadow-xs">
+                すべての条件をリセット
+              </button>
+            ` : ''}
           </div>
         `;
         listContainer.setAttribute('aria-busy', 'false');
