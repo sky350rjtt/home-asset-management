@@ -33,16 +33,18 @@ const Config = (() => {
       sheet.getRange(1, 1, lastRow, 2).getValues()
         .forEach(([k, v]) => { if (k) raw[String(k).trim()] = v; });
  
-      // 【APIキーの安全な調達（ハイブリッド方式）】
-      // 1. スクリプトプロパティ（PropertiesService）にあれば最優先（シート閲覧者にキーを見せない安全な設定）
-      // 2. 未設定なら従来のConfigシートの値にフォールバック（後方互換性を維持）
-      let scriptPropApiKey = null;
+      // 【APIキーの調達はスクリプトプロパティのみ】
+      // Configシートへのフォールバックは廃止（2026-08-16）。ALLOWED_EMAILSでWebアプリ閲覧を
+      // 家族に広げる以上、その家族はConfigシートを含む同一スプレッドシートの閲覧権限も必要になり
+      // （USER_ACCESSING配下ではDrive/Sheetsアクセスも本人の権限で行われるため）、シート上に
+      // APIキーが残っていると誰でも見える状態になる。よってスクリプトプロパティに一本化し、
+      // 未設定なら後段のfail-fastでエラーにする（静かにシート値へ流用しない）。
+      let geminiApiKey = '';
       try {
-        scriptPropApiKey = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
+        geminiApiKey = String(PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY') || '').trim();
       } catch(e) {
-        console.warn(`[Config] スクリプトプロパティ取得スキップ: ${e.message}`);
+        console.warn(`[Config] スクリプトプロパティ取得に失敗: ${e.message}`);
       }
-      const geminiApiKey = String(scriptPropApiKey || raw['GEMINI_API_KEY'] || '').trim();
 
       _cache = {
         GEMINI_API_KEY:       geminiApiKey,
@@ -83,7 +85,7 @@ const Config = (() => {
       if (missing.length) {
         let msg = `Configの必須項目が未入力です：${missing.join(', ')}`;
         if (missing.includes('GEMINI_API_KEY')) {
-          msg += '（※GEMINI_API_KEYはスクリプトプロパティまたはConfigシートに設定してください）';
+          msg += '（※GEMINI_API_KEYはスクリプトプロパティに設定してください。Configシートには置かないこと）';
         }
         throw new Error(msg);
       }

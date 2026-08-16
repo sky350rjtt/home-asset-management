@@ -31,16 +31,16 @@ const Scanner = {
     } catch(e) {
       const msg = '別のスキャン処理が実行中です。しばらく待ってから再実行してください。';
       try { SpreadsheetApp.getUi().alert(msg); } catch(_) {}
-      return { newCount: 0, mergedCount: 0, errorCount: 0, heicCount: 0, message: msg };
+      return { newCount: 0, mergedCount: 0, errorCount: 0, heicCount: 0, skippedFolders: [], message: msg };
     }
- 
+
     try {
       return Scanner._execute();
     } finally {
       lock.releaseLock();
     }
   },
- 
+
   _execute() {
     let config, masters;
     try {
@@ -49,7 +49,7 @@ const Scanner = {
     } catch(e) {
       const msg = `システム起動エラー：\n${e.message}`;
       try { SpreadsheetApp.getUi().alert(msg); } catch(_) {}
-      return { newCount: 0, mergedCount: 0, errorCount: 0, heicCount: 0, message: msg };
+      return { newCount: 0, mergedCount: 0, errorCount: 0, heicCount: 0, skippedFolders: [], message: msg };
     }
  
     const logSheet    = SheetUtils.getOrCreate(Constants.SHEET.LOG,
@@ -60,6 +60,7 @@ const Scanner = {
  
     let newCount = 0, mergedCount = 0, errorCount = 0, heicCount = 0;
     let isTimeLimitReached = false;
+    const skippedFolders = []; // 【可視化】Mastersに未定義のフォルダ名を集め、最終アラートに出す（consoleログだけでは気づかれず放置されるため）
 
     // 【GAS実行時間ガード】GASの最大実行時間（6分）を超過して強制中断されるのを防ぐため、
     // 4分（240秒）を経過した時点で安全にループを抜け、残りは次回スキャンに持ち越す。
@@ -88,6 +89,7 @@ const Scanner = {
         const location = masters.locations.find(l => l.code === folderName);
         if (!location) {
           console.warn(`[Scanner Skip] Mastersに未定義のフォルダをスキップしました: ${folderName}`);
+          if (!skippedFolders.includes(folderName)) skippedFolders.push(folderName);
           continue;
         }
         const r = Location.process(subFolder, location, config, logSheet, docsFolder, unresFolder);
@@ -106,9 +108,14 @@ const Scanner = {
                + `JPEGまたはPNGに変換してから再投入してください。\n`
                + `（iPhone設定 → カメラ → フォーマット → 「互換性優先」を推奨）`;
     }
+    if (skippedFolders.length > 0) {
+      message += `\n\n⚠️ Mastersに未登録のフォルダ名のため、以下はスキップされました（中のファイルは未処理のまま残っています）：\n`
+               + skippedFolders.map(f => `・${f}`).join('\n')
+               + `\nMastersシートに拠点を追加するか、フォルダ名を確認してください。`;
+    }
 
     try { SpreadsheetApp.getUi().alert(message); } catch(_) {}
 
-    return { newCount, mergedCount, errorCount, heicCount, message, isTimeLimitReached };
+    return { newCount, mergedCount, errorCount, heicCount, skippedFolders, message, isTimeLimitReached };
   },
 };
