@@ -24,7 +24,11 @@
     "source=ai-cli-auth-files,target=/home/node/.ai-auth-files,type=volume",
     "source=claude-cli-config,target=/home/node/.claude,type=volume",
     "source=gemini-cli-config,target=/home/node/.gemini,type=volume",
-    "source=codex-cli-config,target=/home/node/.codex,type=volume"
+    "source=codex-cli-config,target=/home/node/.codex,type=volume",
+    // 複数AIエージェント共通のObsidian Vault（WSL側 /home/dev/obsidian-vault が実体）をbind mount。
+    // Vault自体はWindows側のObsidianアプリからUNCパス経由で開き、Obsidian Syncで他端末とも同期する想定。
+    // ここでコンテナにも見せることで、Claude Code/Codex/AntigravityがVault内のMarkdownを直接Read/Editできる。
+    "source=/home/dev/obsidian-vault,target=/home/node/obsidian-vault,type=bind"
   ],
 
   "postCreateCommand": "sudo apt-get update && sudo apt-get install -y jq tree curl && sudo mkdir -p /home/node/.ai-auth-files && sudo chown -R node:node /home/node/.claude /home/node/.gemini /home/node/.codex /home/node/.ai-auth-files && npm install -g @anthropic-ai/claude-code @openai/codex @google/clasp tsx && curl -fsSL https://antigravity.google/cli/install.sh | bash && npm install",
